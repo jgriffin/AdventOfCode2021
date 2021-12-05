@@ -3,9 +3,8 @@
 // Created by John Griffin on 12/2/21
 //
 
-import Foundation
-
 @testable import AdventOfCode2021
+import Foundation
 import Parsing
 import XCTest
 
