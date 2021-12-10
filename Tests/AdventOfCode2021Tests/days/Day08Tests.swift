@@ -167,9 +167,7 @@ extension Day08Tests {
             return characters.first!
         }
 
-        let a = only(known(7).subtracting(known(1)))
         let c = only(known(0).subtracting(known(6)))
-        let d = only(known(8).subtracting(known(0)))
         let e = only(known(8).subtracting(known(9)))
 
         let fivesMap = fives.reduce(into: WireSetDigitMap()) { result, wireSet in
