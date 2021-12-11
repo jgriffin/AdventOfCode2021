@@ -93,10 +93,7 @@ extension Day09Tests {
     func neighborAddresses(_ heights: HeightMap) -> (Address) -> [Address] {
         Address.neighborsFunc(
             offsets: Address.squareNeighborOffsets,
-            isValidIndex: Address.isValidIndexFunc(
-                rowIndices: heights.indices,
-                colIndices: heights.first!.indices
-            )
+            isValidIndex: Address.isValidIndexFunc(heights.indexRCRanges())
         )
     }
 
@@ -106,7 +103,7 @@ extension Day09Tests {
         let neighborsOf = neighborAddresses(heights)
 
         func isLowerThanNeighbors(_ address: Address) -> Bool {
-            let neighborsLow = neighborsOf(address).map { heights[$0.r][$0.c] }.min()!
+            let neighborsLow = neighborsOf(address).map { heights[$0] }.min()!
             return heights[address.r][address.c] < neighborsLow
         }
 

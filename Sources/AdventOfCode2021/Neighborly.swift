@@ -12,14 +12,20 @@ public protocol Neighborly {
 public extension Neighborly {
     typealias IsValidIndex = (Self) -> Bool
 
+    typealias NeighborsOf = (Self) -> [Self]
+
+    static func neighborsFunc(offsets: [(Int, Int)]) -> NeighborsOf {
+        { index in offsets.map { index + $0 } }
+    }
+
     static func neighborsFunc(
         offsets: [(Int, Int)],
-        isValidIndex: IsValidIndex? = nil
-    ) -> (Self) -> [Self] {
-        if let isValidIndex = isValidIndex {
-            return { index in offsets.map { index + $0 }.filter(isValidIndex) }
-        } else {
-            return { index in offsets.map { index + $0 } }
+        isValidIndex: @escaping IsValidIndex
+    ) -> NeighborsOf {
+        let neighborsOf = neighborsFunc(offsets: offsets)
+        return { index in
+            neighborsOf(index)
+                .filter(isValidIndex)
         }
     }
 
@@ -41,8 +47,8 @@ public extension Neighborly {
 
     static var diagonalNeighborOffsets: [(Int, Int)] {
         [
-            (-1, -1), (-1, -1), (-1, 1),
-            (0, -1), (0, 1), (0, 1),
+            (-1, -1), (-1, 0), (-1, 1),
+            (0, -1), (0, 1),
             (1, -1), (1, 0), (1, 1),
         ]
     }

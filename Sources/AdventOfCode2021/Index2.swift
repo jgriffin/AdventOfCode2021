@@ -3,7 +3,7 @@
 // Created by John Griffin on 12/10/21
 //
 
-import Foundation
+import Algorithms
 
 // sometimes we think in terms of XY
 // sometimes we think in terms of rows and columns
@@ -22,13 +22,17 @@ public struct IndexXY: Indexable2, Hashable {
     public var first: Int { x }
     public var second: Int { y }
 
-    public static func isValidIndexFunc(
-        rowIndices: Range<Int>,
-        colIndices: Range<Int>
-    ) -> IsValidIndex {
+    public typealias IndexRanges = (x: Range<Int>, y: Range<Int>)
+    public typealias IsValidIndex = (IndexXY) -> Bool
+
+    public static func isValidIndexFunc(_ ranges: IndexXY.IndexRanges) -> IndexXY.IsValidIndex {
         { index in
-            rowIndices.contains(index.y) && colIndices.contains(index.x)
+            ranges.x.contains(index.x) && ranges.y.contains(index.y)
         }
+    }
+
+    public static func allIndexXY(_ xyRanges: IndexXY.IndexRanges) -> [IndexXY] {
+        product(xyRanges.y, xyRanges.x).map { y, x in IndexXY(x: x, y: y) }
     }
 }
 
@@ -45,17 +49,21 @@ public struct IndexRC: Indexable2, Hashable {
     public var first: Int { r }
     public var second: Int { c }
 
-    public static func isValidIndexFunc(
-        rowIndices: Range<Int>,
-        colIndices: Range<Int>
-    ) -> IsValidIndex {
+    public typealias IndexRanges = (r: Range<Int>, c: Range<Int>)
+    public typealias IsValidIndex = (IndexRC) -> Bool
+
+    public static func isValidIndexFunc(_ ranges: IndexRC.IndexRanges) -> IndexRC.IsValidIndex {
         { index in
-            rowIndices.contains(index.r) && colIndices.contains(index.c)
+            ranges.r.contains(index.r) && ranges.c.contains(index.c)
         }
+    }
+
+    public static func allIndexRC(_ ranges: IndexRC.IndexRanges) -> [IndexRC] {
+        product(ranges.r, ranges.c).map { r, c in IndexRC(r: r, c: c) }
     }
 }
 
-public protocol Indexable2: Neighborly {
+public protocol Indexable2: Neighborly, CustomStringConvertible {
     init(_ first: Int, _ second: Int)
     var first: Int { get }
     var second: Int { get }
