@@ -88,23 +88,16 @@ extension Day09Tests {
         return minHeights.reduce(0) { result, height in result + 1 + height }
     }
 
-    struct Address: Hashable, CustomStringConvertible {
-        let r, c: Int
-        var description: String { "(\(r),\(c))" }
-    }
+    typealias Address = IndexRC
 
     func neighborAddresses(_ heights: HeightMap) -> (Address) -> [Address] {
-        let (rows, cols) = (heights.indices, heights.first!.indices)
-        return { a in
-            let (r, c) = (a.r, a.c)
-            return [
-                Address(r: r, c: c + 1),
-                Address(r: r, c: c - 1),
-                Address(r: r + 1, c: c),
-                Address(r: r - 1, c: c),
-            ]
-            .filter { a in rows.contains(a.r) && cols.contains(a.c) }
-        }
+        Address.neighborsFunc(
+            offsets: Address.squareNeighborOffsets,
+            isValidIndex: Address.isValidIndexFunc(
+                rowIndices: heights.indices,
+                colIndices: heights.first!.indices
+            )
+        )
     }
 
     func lowAddresses(_ heights: HeightMap) -> [Address] {

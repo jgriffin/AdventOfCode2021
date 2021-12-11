@@ -5,7 +5,7 @@
 
 import Foundation
 
-@testable import AdventOfCode2021
+import AdventOfCode2021
 import Algorithms
 import Parsing
 import XCTest
@@ -73,11 +73,7 @@ final class Day05Tests: XCTestCase {
 }
 
 extension Day05Tests {
-    struct Coordinate: Equatable, CustomStringConvertible {
-        let x, y: Int
-
-        var description: String { "\(x),\(y)" }
-    }
+    typealias Coordinate = IndexXY
 
     struct Line: Equatable, CustomStringConvertible {
         let from, to: Coordinate
@@ -88,14 +84,13 @@ extension Day05Tests {
 
         func path() -> [Coordinate] {
             let maxLength = max(abs(from.x - to.x), abs(from.y - to.y))
-            let stepX = (to.x - from.x) / maxLength
-            let stepY = (to.y - from.y) / maxLength
+            let step = ((to.x - from.x) / maxLength, (to.y - from.y) / maxLength)
 
             var path = [Coordinate]()
             var curr = from
             for _ in 0 ... maxLength {
                 path.append(curr)
-                curr = Coordinate(x: curr.x + stepX, y: curr.y + stepY)
+                curr += step
             }
 
             return path
