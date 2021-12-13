@@ -109,8 +109,8 @@ extension Day11Tests {
             self.energies = energies
 
             let indexRanges = energies.indexXYRanges()
-            self.allLocations = Loc.allIndexXY(indexRanges)
-            self.neighborsOf = Loc.neighborsFunc(
+            allLocations = Loc.allIndexXY(indexRanges)
+            neighborsOf = Loc.neighborsFunc(
                 offsets: Loc.diagonalNeighborOffsets,
                 isValidIndex: Loc.isValidIndexFunc(indexRanges)
             )
