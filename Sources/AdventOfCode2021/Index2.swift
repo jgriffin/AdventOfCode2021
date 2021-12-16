@@ -9,7 +9,7 @@ import Algorithms
 // sometimes we think in terms of rows and columns
 // but there's a lot in common between IndexXY and IndexRC, so we have Indexable2
 
-public struct IndexXY: Indexable2, Hashable {
+public struct IndexXY: Indexable2 {
     public let x, y: Int
 
     public init(_ x: Int, _ y: Int) {
@@ -36,7 +36,7 @@ public struct IndexXY: Indexable2, Hashable {
     }
 }
 
-public struct IndexRC: Indexable2, Hashable {
+public struct IndexRC: Indexable2 {
     public let r, c: Int
 
     public init(_ r: Int, _ y: Int) {
@@ -63,7 +63,7 @@ public struct IndexRC: Indexable2, Hashable {
     }
 }
 
-public protocol Indexable2: Neighborly, CustomStringConvertible {
+public protocol Indexable2: Hashable, Neighborly, CustomStringConvertible {
     init(_ first: Int, _ second: Int)
     var first: Int { get }
     var second: Int { get }
@@ -73,6 +73,9 @@ public extension Indexable2 {
     init(_ pair: (Int, Int)) { self.init(pair.0, pair.1) }
 
     var description: String { "(\(first),\(second))" }
+
+    static var zero: Self { Self(0, 0) }
+    static var invalid: Self { Self(-1, -1) }
 
     typealias IsValidIndex = (Self) -> Bool
 
@@ -86,4 +89,10 @@ public extension Indexable2 {
 
     static func += (lhs: inout Self, rhs: Self) { lhs = lhs + rhs }
     static func += (lhs: inout Self, offset: (Int, Int)) { lhs = lhs + offset }
+}
+
+public extension Indexable2 {
+    static func manhattanDistance(_ i1: Self, _ i2: Self) -> Int {
+        abs(i2.first - i1.first) + abs(i2.second - i1.second)
+    }
 }

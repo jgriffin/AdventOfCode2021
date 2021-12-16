@@ -1,5 +1,5 @@
 
-func memoize<X: Hashable, Y>(
+public func memoize<X: Hashable, Y>(
     work: @escaping (X) -> Y
 ) -> (X) -> Y {
     var memo = [X: Y]()
@@ -15,7 +15,7 @@ func memoize<X: Hashable, Y>(
     }
 }
 
-func memoizeRecursive<X: Hashable, Y>(
+public func memoizeRecursive<X: Hashable, Y>(
     work: @escaping (X, _ recurse: (X) -> Y) -> Y
 ) -> (X) -> Y {
     var memo = [X: Y]()
