@@ -6,7 +6,7 @@
 import Foundation
 
 public extension Collection where Element: Hashable {
+    var asArray: [Self.Element] { Array(self) }
     var asSet: Set<Self.Element> { Set(self) }
-
     var asString: String { map { "\($0)" }.joined(separator: ", ") }
 }
