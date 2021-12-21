@@ -34,6 +34,11 @@ public struct IndexXY: Indexable2 {
     public static func allIndexXY(_ xyRanges: IndexXY.IndexRanges) -> [IndexXY] {
         product(xyRanges.y, xyRanges.x).map { y, x in IndexXY(x: x, y: y) }
     }
+
+    public func ensureIn(_ ranges: IndexRanges) -> IndexXY {
+        IndexXY(x: max(ranges.x.lowerBound, min(x, ranges.x.upperBound - 1)),
+                y: max(ranges.y.lowerBound, min(y, ranges.y.upperBound - 1)))
+    }
 }
 
 public struct IndexRC: Indexable2 {
@@ -87,12 +92,44 @@ public extension Indexable2 {
         .init(lhs.first + offset.0, lhs.second + offset.1)
     }
 
+    static func - (lhs: Self, rhs: Self) -> Self {
+        .init(lhs.first - rhs.first, lhs.second - rhs.second)
+    }
+
+    static func - (lhs: Self, offset: (Int, Int)) -> Self {
+        .init(lhs.first - offset.0, lhs.second - offset.1)
+    }
+
     static func += (lhs: inout Self, rhs: Self) { lhs = lhs + rhs }
     static func += (lhs: inout Self, offset: (Int, Int)) { lhs = lhs + offset }
+    static func -= (lhs: inout Self, rhs: Self) { lhs = lhs - rhs }
+    static func -= (lhs: inout Self, offset: (Int, Int)) { lhs = lhs - offset }
 }
 
 public extension Indexable2 {
     static func manhattanDistance(_ i1: Self, _ i2: Self) -> Int {
         abs(i2.first - i1.first) + abs(i2.second - i1.second)
+    }
+}
+
+public struct Ranger<Index: Indexable2> {
+    public init() {}
+
+    public var minIndex = Index(.max, .max)
+    public var maxIndex = Index(.min, .min)
+
+    public var ranges: (x: Range<Int>, y: Range<Int>) {
+        (x: minIndex.first ..< maxIndex.first + 1,
+         y: minIndex.second ..< maxIndex.second + 1)
+    }
+
+    public mutating func expand(toInclude i: Index) {
+        minIndex = Index(min(minIndex.first, i.first), min(minIndex.second, i.second))
+        maxIndex = Index(max(maxIndex.first, i.first), max(maxIndex.second, i.second))
+    }
+
+    public mutating func addPadding(_ padding: Int) {
+        expand(toInclude: minIndex - (padding, padding))
+        expand(toInclude: maxIndex + (padding, padding))
     }
 }
