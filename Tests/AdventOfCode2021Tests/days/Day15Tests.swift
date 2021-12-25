@@ -28,14 +28,14 @@ final class Day15Tests: XCTestCase {
     func testTotalRisk5xExample() {
         let riskMap = Self.riskMapParser.parse(example)!
 
-        let (totalRisk, _) = bestPath5x(riskMap)
+        let totalRisk = bestPath5xTotalRisk(riskMap)
         XCTAssertEqual(totalRisk, 315)
     }
 
     func testTotalRisk5xInput() {
         let riskMap = Self.riskMapParser.parse(input)!
 
-        let (totalRisk, _) = bestPath5x(riskMap)
+        let totalRisk = bestPath5xTotalRisk(riskMap)
         XCTAssertEqual(totalRisk, 2853)
     }
 
@@ -44,14 +44,14 @@ final class Day15Tests: XCTestCase {
     func testTotalRiskExample() {
         let riskMap = Self.riskMapParser.parse(example)!
 
-        let (totalRisk, _) = bestPath(riskMap)
+        let totalRisk = bestPathTotalRisk(riskMap)
         XCTAssertEqual(totalRisk, 40)
     }
 
     func testTotalRiskInput() {
         let riskMap = Self.riskMapParser.parse(input)!
 
-        let (totalRisk, _) = bestPath(riskMap)
+        let totalRisk = bestPathTotalRisk(riskMap)
         XCTAssertEqual(totalRisk, 503)
     }
 
@@ -78,7 +78,7 @@ extension Day15Tests {
     typealias RiskMap = [[Risk]]
     typealias Index = IndexXY
 
-    func bestPath5x(_ riskMap: RiskMap) -> (totalRisk: Risk, path: [Index]) {
+    func bestPath5xTotalRisk(_ riskMap: RiskMap) -> Risk {
         let map1xIndices = riskMap.indexXYRanges()
         let map1xMax = Index(map1xIndices.x.count, map1xIndices.y.count)
 
@@ -123,8 +123,9 @@ extension Day15Tests {
         }
 
         let solver = AStar(
-            neighbors: neighbors,
-            stepCostTo: { to, _ in tiledRisk(to) },
+            neighborsOf: { i in
+                neighbors(i).map { n in (n, (), tiledRisk(n)) }
+            },
             h: h
         )
 
@@ -133,11 +134,11 @@ extension Day15Tests {
             goal: Index(map5xIndices.x.last!, map5xIndices.y.last!)
         ) else { fatalError() }
 
-        let totalRisk = path.dropFirst().map(tiledRisk).reduce(0,+)
-        return (totalRisk, path)
+        let totalRisk = path.map(\.c).reduce(0,+)
+        return totalRisk
     }
 
-    func bestPath(_ riskMap: RiskMap) -> (totalRisk: Risk, path: [Index]) {
+    func bestPathTotalRisk(_ riskMap: RiskMap) -> Risk {
         let mapIndices = riskMap.indexXYRanges()
         let neighbors = Index.neighborsFunc(
             offsets: Index.squareNeighborOffsets,
@@ -145,8 +146,9 @@ extension Day15Tests {
         )
 
         let solver = AStar(
-            neighbors: neighbors,
-            stepCostTo: { to, _ in riskMap[to] },
+            neighborsOf: { i in
+                neighbors(i).map { n in (n, (), riskMap[n]) }
+            },
             h: Index.manhattanDistance
         )
 
@@ -155,7 +157,7 @@ extension Day15Tests {
             goal: Index(mapIndices.x.last!, mapIndices.y.last!)
         ) else { fatalError() }
 
-        let totalRisk = path.dropFirst().map { riskMap[$0] }.reduce(0,+)
-        return (totalRisk, path)
+        let totalRisk = path.map(\.c).reduce(0,+)
+        return totalRisk
     }
 }

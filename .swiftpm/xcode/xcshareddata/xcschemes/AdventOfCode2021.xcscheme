@@ -37,11 +37,6 @@
                BlueprintName = "AdventOfCode2021Tests"
                ReferencedContainer = "container:">
             </BuildableReference>
-            <SkippedTests>
-               <Test
-                  Identifier = "Day15Tests/testTotalRisk5xExample()">
-               </Test>
-            </SkippedTests>
          </TestableReference>
       </Testables>
    </TestAction>
