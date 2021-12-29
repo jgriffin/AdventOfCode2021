@@ -9,7 +9,7 @@ public extension Collection where Element: Hashable {
     var asSet: Set<Self.Element> { Set(self) }
 }
 
-public extension Collection {
+public extension Sequence {
     var asArray: [Self.Element] { Array(self) }
     var asString: String { map { "\($0)" }.joined(separator: ", ") }
 }

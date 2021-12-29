@@ -3,7 +3,6 @@
 // Created by John Griffin on 12/15/21
 //
 
-import Collections
 import Foundation
 
 public struct AStar<Node: Hashable, Edge> {
