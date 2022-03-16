@@ -76,47 +76,50 @@ final class Day02Tests: XCTestCase {
         }
     }
 
-    static let commandParser = OneOfMany(
-        Skip("forward").skip(" ").take(Int.parser()).map(Command.forward),
-        Skip("down").skip(" ").take(Int.parser()).map(Command.down),
-        Skip("up").skip(" ").take(Int.parser()).map(Command.up)
-    )
-
-    static let commandsParser = Many(commandParser, separator: "\n")
-
-    func testParseExample() {
-        let commands = Self.commandsParser.parse(example)
-        XCTAssertEqual(commands?.count, 6)
+    static let commandParser = OneOf {
+        Parse { Command.forward($0) } with: { "forward "; Int.parser() }
+        Parse { Command.down($0) } with: { "down "; Int.parser() }
+        Parse { Command.up($0) } with: { "up "; Int.parser() }
     }
 
-    func testParseInput() {
-        let commands = Self.commandsParser.parse(input)
-        XCTAssertEqual(commands?.count, 1000)
+    static let commandsParser = Parse {
+        Many { commandParser } separator: { "\n" }
+        Skip { Optionally { "\n" } }
     }
 
-    func testSolveExample() {
-        let commands = Self.commandsParser.parse(example)!
+    func testParseExample() throws {
+        let commands = try Self.commandsParser.parse(example)
+        XCTAssertEqual(commands.count, 6)
+    }
+
+    func testParseInput() throws {
+        let commands = try Self.commandsParser.parse(input)
+        XCTAssertEqual(commands.count, 1000)
+    }
+
+    func testSolveExample() throws {
+        let commands = try Self.commandsParser.parse(example)
         let result = Postion().apply(commands)
         XCTAssertEqual(result, Postion(horizontal: 15, depth: 10))
         XCTAssertEqual(result.horizontal * result.depth, 150)
     }
 
-    func testSolveInput() {
-        let commands = Self.commandsParser.parse(input)!
+    func testSolveInput() throws {
+        let commands = try Self.commandsParser.parse(input)
         let result = Postion().apply(commands)
         XCTAssertEqual(result, Postion(horizontal: 2003, depth: 872))
         XCTAssertEqual(result.horizontal * result.depth, 1_746_616)
     }
 
-    func testSolve2Example() {
-        let commands = Self.commandsParser.parse(example)!
+    func testSolve2Example() throws {
+        let commands = try Self.commandsParser.parse(example)
         let result = Postion().apply2(commands)
         XCTAssertEqual(result, Postion(horizontal: 15, depth: 60, aim: 10))
         XCTAssertEqual(result.horizontal * result.depth, 900)
     }
 
-    func testSolve2Input() {
-        let commands = Self.commandsParser.parse(input)!
+    func testSolve2Input() throws {
+        let commands = try Self.commandsParser.parse(input)
         let result = Postion().apply2(commands)
         XCTAssertEqual(result, Postion(horizontal: 2003, depth: 869_681, aim: 872))
         XCTAssertEqual(result.horizontal * result.depth, 1_741_971_043)

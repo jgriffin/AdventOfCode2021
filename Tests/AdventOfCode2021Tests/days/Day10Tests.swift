@@ -28,19 +28,22 @@ final class Day10Tests: XCTestCase {
     static let closeSet = Set(">}])")
     static let validSet = openSet.union(closeSet)
 
-    static let parseLine = Prefix(1..., while: validSet.contains).utf8
-    static let parseLines = Many(parseLine, separator: "\n".utf8)
+    static let parseLine = Prefix(1..., while: validSet.contains)
+    static let parseLines = Parse {
+        Many { parseLine } separator: { "\n" }
+        Skip { Optionally { "\n" } }
+    }
 
     // MARK: parse tests
 
     func testParseExample() {
-        let lines = Self.parseLines.parse(example)!
+        let lines = try! Self.parseLines.parse(example)
         XCTAssertEqual(lines.count, 10)
         XCTAssertEqual(lines.last?.last, "]")
     }
 
     func testParseInput() {
-        let lines = Self.parseLines.parse(input)!
+        let lines = try! Self.parseLines.parse(input)
         XCTAssertEqual(lines.count, 110)
         XCTAssertEqual(lines.last?.last, ")")
     }
@@ -48,7 +51,7 @@ final class Day10Tests: XCTestCase {
     // MARK: invalid tests
 
     func testInvalidScoreExample() {
-        let lines = Self.parseLines.parse(example)!
+        let lines = try! Self.parseLines.parse(example)
         let invalidLines = lines.compactMap(invalidLine)
         XCTAssertEqual(invalidLines.count, 5)
 
@@ -57,7 +60,7 @@ final class Day10Tests: XCTestCase {
     }
 
     func testInvalidScoreInput() {
-        let lines = Self.parseLines.parse(input)!
+        let lines = try! Self.parseLines.parse(input)
         let invalidLines = lines.compactMap(invalidLine)
         XCTAssertEqual(invalidLines.count, 55)
 
@@ -68,13 +71,13 @@ final class Day10Tests: XCTestCase {
     // MARK: completion tests
 
     func testIncompleteLineExample() {
-        let lines = Self.parseLines.parse(example)!
+        let lines = try! Self.parseLines.parse(example)
         let incompleteLines = lines.compactMap(incompleteLine)
         XCTAssertEqual(incompleteLines.count, 5)
     }
 
     func testAutocompleScoreExample() {
-        let lines = Self.parseLines.parse(example)!
+        let lines = try! Self.parseLines.parse(example)
         let incompleteLines = lines.compactMap(incompleteLine)
 
         let completions = incompleteLines.map { autoCompleteLine($0.s) }.map(\.completion)
@@ -89,7 +92,7 @@ final class Day10Tests: XCTestCase {
     }
 
     func testAutocompleScoreInput() {
-        let lines = Self.parseLines.parse(input)!
+        let lines = try! Self.parseLines.parse(input)
         let incompleteLines = lines.compactMap(incompleteLine)
 
         let completions = incompleteLines.map { autoCompleteLine($0.s) }.map(\.completion)

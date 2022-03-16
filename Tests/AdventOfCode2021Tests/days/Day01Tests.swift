@@ -19,35 +19,38 @@ final class Day01Tests: XCTestCase {
     let input = resourceURL(filename: "Day01Input.txt")!.readContents()!
 
     static let depthParser = Int.parser(of: Substring.self)
-    static let depthsParser = Many(depthParser, separator: "\n")
+    static let depthsParser = Parse {
+        Many { depthParser } separator: { "\n" }
+        Skip { Optionally { "\n" } }
+    }
 
     func testParseExample() throws {
-        let depths = Self.depthsParser.parse(example)
+        let depths = try Self.depthsParser.parse(example)
         XCTAssertEqual(depths, [199, 200, 208, 210, 200, 207, 240, 269, 260, 263])
     }
 
     func testParseInput() throws {
-        let depths = Self.depthsParser.parse(input)
-        XCTAssertEqual(depths?.count, 2000)
-        XCTAssertEqual(depths?.last, 4618)
+        let depths = try Self.depthsParser.parse(input)
+        XCTAssertEqual(depths.count, 2000)
+        XCTAssertEqual(depths.last, 4618)
     }
 
     func testCountIncreasesExample() throws {
-        let depths = Self.depthsParser.parse(example)!
+        let depths = try Self.depthsParser.parse(example)
         let deltas = depthDeltas(depths: depths)
         let increaseCount = deltas.filter { $0 > 0 }.count
         XCTAssertEqual(increaseCount, 7)
     }
 
     func testCountIncreasesInput() throws {
-        let depths = Self.depthsParser.parse(input)!
+        let depths = try Self.depthsParser.parse(input)
         let deltas = depthDeltas(depths: depths)
         let increaseCount = deltas.filter { $0 > 0 }.count
         XCTAssertEqual(increaseCount, 1316)
     }
 
     func testCountTrippleIncreasesExample() throws {
-        let depths = Self.depthsParser.parse(example)!
+        let depths = try Self.depthsParser.parse(example)
         let tripples = depthTripples(depths: depths)
         let deltas = depthDeltas(depths: tripples)
         let increaseCount = deltas.filter { $0 > 0 }.count
@@ -55,7 +58,7 @@ final class Day01Tests: XCTestCase {
     }
 
     func testCountTrippleIncreasesInput() throws {
-        let depths = Self.depthsParser.parse(input)!
+        let depths = try Self.depthsParser.parse(input)
         let tripples = depthTripples(depths: depths)
         let deltas = depthDeltas(depths: tripples)
         let increaseCount = deltas.filter { $0 > 0 }.count

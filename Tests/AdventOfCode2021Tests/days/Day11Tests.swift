@@ -32,21 +32,23 @@ final class Day11Tests: XCTestCase {
     11111
     """
 
-    static let lineParser = Prefix(1..., while: { $0.isNumber }).utf8
+    static let lineParser = Prefix(1...) { $0.isNumber }
         .map { $0.map { $0.wholeNumberValue! }}
-    static let linesParser = Many(lineParser, separator: "\n".utf8)
-        .map { Ocean(energies: $0) }
+    static let linesParser = Parse { Ocean(energies: $0) } with: {
+        Many { lineParser } separator: { "\n" }
+        Skip { Optionally { "\n" } }
+    }
 
     // MARK: - syncrhonized
 
     func testSynchronizedExample() {
-        let ocean = Self.linesParser.parse(example)!
+        let ocean = try! Self.linesParser.parse(example)
         let step = ocean.stepUntilSynchronized()
         XCTAssertEqual(step, 195)
     }
 
     func testSynchronizedInput() {
-        let ocean = Self.linesParser.parse(input)!
+        let ocean = try! Self.linesParser.parse(input)
         let step = ocean.stepUntilSynchronized()
         XCTAssertEqual(step, 235)
     }
@@ -54,7 +56,7 @@ final class Day11Tests: XCTestCase {
     // MARK: - flashCount
 
     func testFlashCountExample() {
-        let ocean = Self.linesParser.parse(example)!
+        let ocean = try! Self.linesParser.parse(example)
         let totalFlashCount = (0 ..< 100)
             .map { _ in ocean.stepFlashCount() }
             .reduce(0, +)
@@ -62,7 +64,7 @@ final class Day11Tests: XCTestCase {
     }
 
     func testFlashCountInput() {
-        let ocean = Self.linesParser.parse(input)!
+        let ocean = try! Self.linesParser.parse(input)
         let totalFlashCount = (0 ..< 100)
             .map { _ in ocean.stepFlashCount() }
             .reduce(0, +)
@@ -72,7 +74,7 @@ final class Day11Tests: XCTestCase {
     // MARK: - step
 
     func testStepExample() {
-        let ocean = Self.linesParser.parse(stepExample)!
+        let ocean = try! Self.linesParser.parse(stepExample)
         let step1 = ocean.stepFlashCount()
         XCTAssertEqual(step1, 9)
         let step2 = ocean.stepFlashCount()
@@ -82,7 +84,7 @@ final class Day11Tests: XCTestCase {
     // MARK: - parse
 
     func testParseExample() {
-        let ocean = Self.linesParser.parse(example)!
+        let ocean = try! Self.linesParser.parse(example)
         XCTAssertEqual(ocean.energies.count, 10)
         XCTAssertEqual(ocean.energies.last?.count, 10)
 
@@ -90,7 +92,7 @@ final class Day11Tests: XCTestCase {
     }
 
     func testParseInput() {
-        let ocean = Self.linesParser.parse(input)!
+        let ocean = try! Self.linesParser.parse(input)
         XCTAssertEqual(ocean.energies.count, 10)
         XCTAssertEqual(ocean.energies.last?.count, 10)
     }

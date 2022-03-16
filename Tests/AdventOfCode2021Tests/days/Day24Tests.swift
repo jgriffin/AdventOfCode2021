@@ -9,7 +9,7 @@ import XCTest
 
 final class Day24Tests: XCTestCase {
     func testMaxMemoized() {
-        let parts = Self.monadParser.parse(Self.input)!.parts
+        let parts = try! Self.monadParser.parse(Self.input).parts
         let solver = makeMaxSolver(parts)
 
         let s = solver(.init(iPart: 0, z: 0))!
@@ -18,7 +18,7 @@ final class Day24Tests: XCTestCase {
     }
 
     func testMinMemoized() {
-        let parts = Self.monadParser.parse(Self.input)!.parts
+        let parts = try! Self.monadParser.parse(Self.input).parts
         let solver = makeMinSolver(parts)
 
         let s = solver(.init(iPart: 0, z: 0))!
@@ -27,7 +27,7 @@ final class Day24Tests: XCTestCase {
     }
 
     func testMonadPartSignatures() {
-        let monad = Self.monadParser.parse(Self.input)!
+        let monad = try! Self.monadParser.parse(Self.input)
         let parts = monad.parts
 
         parts.enumerated().forEach { i, part in
@@ -282,43 +282,71 @@ extension Day24Tests {
     // MARK: - parser
 
     static let operandParser: AnyParser<Substring.UTF8View, Day24Tests.Operand> =
-        OneOfMany("w".utf8.map { Operand.w },
-                  "x".utf8.map { Operand.x },
-                  "y".utf8.map { Operand.y },
-                  "z".utf8.map { Operand.z })
-        .orElse(Int.parser().utf8.map { Operand.integer($0) }).eraseToAnyParser()
+        OneOf {
+            "w".utf8.map { Operand.w }
+            "x".utf8.map { Operand.x }
+            "y".utf8.map { Operand.y }
+            "z".utf8.map { Operand.z }
+            Int.parser().map { Operand.integer($0) }
+        }.eraseToAnyParser()
 
-    static let inpParser = StartsWith("inp ".utf8).take(operandParser)
-        .map { Instruction.inp($0) }
-        .eraseToAnyParser()
-    static let addParser = StartsWith("add ".utf8).take(operandParser).skip(" ".utf8).take(operandParser)
-        .map { a, b in Instruction.add(a: a, b: b) }
-        .eraseToAnyParser()
-    static let mulParser = StartsWith("mul ".utf8).take(operandParser).skip(" ".utf8).take(operandParser)
-        .map { a, b in Instruction.mul(a: a, b: b) }
-        .eraseToAnyParser()
-    static let divParser = StartsWith("div ".utf8).take(operandParser).skip(" ".utf8).take(operandParser)
-        .map { a, b in Instruction.div(a: a, b: b) }
-        .eraseToAnyParser()
-    static let modParser = StartsWith("mod ".utf8).take(operandParser).skip(" ".utf8).take(operandParser)
-        .map { a, b in Instruction.mod(a: a, b: b) }
-        .eraseToAnyParser()
-    static let eqlParser = StartsWith("eql ".utf8).take(operandParser).skip(" ".utf8).take(operandParser)
-        .map { a, b in Instruction.eql(a: a, b: b) }
-        .eraseToAnyParser()
+    static let inpParser =
+        Parse { Instruction.inp($0) } with: {
+            "inp ".utf8
+            operandParser
+        }.eraseToAnyParser()
+    static let addParser =
+        Parse { Instruction.add(a: $0, b: $1) } with: {
+            "add ".utf8
+            operandParser
+            " ".utf8
+            operandParser
+        }.eraseToAnyParser()
+    static let mulParser =
+        Parse { Instruction.mul(a: $0, b: $1) } with: {
+            "mul ".utf8
+            operandParser
+            " ".utf8
+            operandParser
+        }.eraseToAnyParser()
+    static let divParser =
+        Parse { Instruction.div(a: $0, b: $1) } with: {
+            "div ".utf8
+            operandParser
+            " ".utf8
+            operandParser
+        }.eraseToAnyParser()
+    static let modParser =
+        Parse { Instruction.mod(a: $0, b: $1) } with: {
+            "mod ".utf8
+            operandParser
+            " ".utf8
+            operandParser
+        }.eraseToAnyParser()
+
+    static let eqlParser =
+        Parse { Instruction.eql(a: $0, b: $1) } with: {
+            "eql ".utf8
+            operandParser
+            " ".utf8
+            operandParser
+        }.eraseToAnyParser()
 
     static let instructionParser: AnyParser<Substring.UTF8View, Day24Tests.Instruction> =
-        OneOfMany(inpParser, addParser, mulParser, divParser, modParser, eqlParser).eraseToAnyParser()
-    static let monadParser = Many(instructionParser, atLeast: 1, separator: "\n".utf8)
-        .map { Monad(instructions: $0) }
+        OneOf { inpParser; addParser; mulParser; divParser; modParser; eqlParser }.eraseToAnyParser()
+
+    static let monadParser = Parse { Monad(instructions: $0) } with: {
+        Many(atLeast: 1) { instructionParser } separator: { "\n".utf8 }
+        Skip { Optionally { "\n".utf8 } }
+    }
 
     func testParseExample() {
-        let monad = Self.monadParser.parse(Self.example)!
+        let monad = try! Self.monadParser.parse(Self.example)
         XCTAssertEqual(monad.instructions.count, 11)
     }
 
     func testParseInput() {
-        let monad = Self.monadParser.parse(Self.input)!
+        let monad = try! Self.monadParser.parse(Self.input)
         XCTAssertEqual(monad.instructions.count, 252)
         XCTAssertEqual(monad.instructions.last, Instruction.add(a: .z, b: .y))
     }

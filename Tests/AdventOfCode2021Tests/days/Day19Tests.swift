@@ -16,7 +16,7 @@ final class Day19Tests: XCTestCase {
     let input = resourceURL(filename: "Day19Input.txt")!.readContents()!
 
     func testFindAllBeaconsExample() {
-        let scanners = Self.scannersParser.parse(example)!
+        let scanners = try! Self.scannersParser.parse(example)
 
         let (beacons, placedScanners) = findAllBeacons(scanners)
 
@@ -33,7 +33,7 @@ final class Day19Tests: XCTestCase {
     }
 
     func testFindAllBeaconsInput() {
-        let scanners = Self.scannersParser.parse(input)!
+        let scanners = try! Self.scannersParser.parse(input)
 
         let (beacons, placedScanners) = findAllBeacons(scanners)
 
@@ -50,7 +50,7 @@ final class Day19Tests: XCTestCase {
     }
 
     func testPlacementOfScanner1() {
-        let scanners = Self.scannersParser.parse(example)!
+        let scanners = try! Self.scannersParser.parse(example)
         let beacons = scanners[0].measurements.asSet
 
         guard let placement = placementOfScanner(scanners[1], givenBeacons: beacons) else {
@@ -69,7 +69,7 @@ final class Day19Tests: XCTestCase {
     }
 
     func testPositionOFScanner0() {
-        let scanner0 = Self.scannersParser.parse(example)!.first!
+        let scanner0 = try! Self.scannersParser.parse(example).first!
         let beacons = scanner0.measurements.asSet
 
         guard let positionAndRotation = placementOfScanner(scanner0, givenBeacons: beacons) else {
@@ -88,25 +88,37 @@ final class Day19Tests: XCTestCase {
     // MARK: - parser
 
     func testParseExample() {
-        let scanners = Self.scannersParser.parse(example)!
+        let scanners = try! Self.scannersParser.parse(example)
         XCTAssertEqual(scanners.count, 5)
     }
 
     func testParseInput() {
-        let scanners = Self.scannersParser.parse(input)!
+        let scanners = try! Self.scannersParser.parse(input)
         XCTAssertEqual(scanners.count, 33)
         XCTAssertEqual(scanners.last?.measurements.last, Position(-632, 720, 398))
     }
 
-    static let headingParser = "--- scanner ".utf8.take(Int.parser()).skip(" ---".utf8).skip("\n".utf8)
-        .map { "scanner \($0)" }
-    static let xyxParser = Many(Int.parser(), atLeast: 3, atMost: 3, separator: ",".utf8)
-        .map { Position($0[0], $0[1], $0[2]) }
-    static let scannerParser = headingParser.take(Many(xyxParser, separator: "\n".utf8))
-        .map { Scanner(name: $0, measurements: $1) }
-    static let scannersParser = Many(scannerParser, separator: "\n\n".utf8)
-        .skip(Many("\n".utf8, atLeast: 0))
-        .skip(End())
+    static let headingParser = Parse { "scanner \($0)" } with: {
+        "--- scanner "
+        Int.parser()
+        " ---"
+        "\n"
+    }
+
+    static let xyxParser = Parse { Position($0[0], $0[1], $0[2]) } with: {
+        Many(atLeast: 3, atMost: 3) { Int.parser() } separator: { "," }
+    }
+
+    static let scannerParser = Parse { Scanner(name: $0, measurements: $1) } with: {
+        headingParser
+        Many { xyxParser } separator: { "\n" }
+    }
+
+    static let scannersParser = Parse {
+        Many { scannerParser } separator: { "\n\n" }
+        Skip { Many(atLeast: 0) { "\n" } }
+        End()
+    }
 }
 
 extension Day19Tests {

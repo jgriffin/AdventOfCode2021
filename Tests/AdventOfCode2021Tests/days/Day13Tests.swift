@@ -37,7 +37,7 @@ final class Day13Tests: XCTestCase {
     }
 
     func testFoldPaperExample() {
-        let (dots, folds) = Self.instructionsParser.parse(example)!
+        let (dots, folds) = try! Self.instructionsParser.parse(example)
         let paper = Paper.fromDots(dots)
 
         let oneFold = folds.prefix(1).reduce(paper) { paper, fold in
@@ -53,7 +53,7 @@ final class Day13Tests: XCTestCase {
     }
 
     func testFoldPaperInput() {
-        let (dots, folds) = Self.instructionsParser.parse(input)!
+        let (dots, folds) = try! Self.instructionsParser.parse(input)
         let paper = Paper.fromDots(dots)
 
         let oneFold = folds.prefix(1).reduce(paper) { paper, fold in
@@ -71,7 +71,7 @@ final class Day13Tests: XCTestCase {
     // MARK: - parser
 
     func testParseExample() {
-        let (dots, folds) = Self.instructionsParser.parse(example)!
+        let (dots, folds) = try! Self.instructionsParser.parse(example)
         XCTAssertEqual(dots.count, 18)
         XCTAssertEqual(dots.last, Index(9, 0))
         XCTAssertEqual(folds.count, 2)
@@ -79,29 +79,33 @@ final class Day13Tests: XCTestCase {
     }
 
     func testParseInput() {
-        let (dots, folds) = Self.instructionsParser.parse(input)!
+        let (dots, folds) = try! Self.instructionsParser.parse(input)
         XCTAssertEqual(dots.count, 791)
         XCTAssertEqual(dots.last, Index(774, 285))
         XCTAssertEqual(folds.count, 12)
         XCTAssertEqual(folds.last, .y(6))
     }
 
-    static let intParser = Prefix(1..., while: { $0.isNumber }).utf8.map { Int($0)! }
-    static let dotParser = intParser.skip(",".utf8).take(intParser).map { Index($0, $1) }
-    static let dotsParser = Many(dotParser, separator: "\n".utf8)
+    static let intParser = Prefix(1..., while: { $0.isNumber }).map { Int($0)! }
+    static let dotParser = Parse { Index($0, $1) } with: { intParser; ","; intParser }
+    static let dotsParser = Many { dotParser } separator: { "\n" }
 
     enum Fold: Equatable {
         case x(Int)
         case y(Int)
     }
 
-    static let foldXParser = Skip("fold along x=").utf8.take(intParser).map { Fold.x($0) }
-    static let foldYParser = Skip("fold along y=").utf8.take(intParser).map { Fold.y($0) }
-    static let foldParser = foldXParser.orElse(foldYParser)
-    static let foldsParser = Many(foldParser, separator: "\n".utf8)
+    static let foldXParser = Parse { Fold.x($0) } with: { "fold along x="; intParser }
+    static let foldYParser = Parse { Fold.y($0) } with: { "fold along y="; intParser }
+    static let foldParser = OneOf { foldXParser; foldYParser }
+    static let foldsParser = Many { foldParser } separator: { "\n" }
 
-    static let instructionsParser = dotsParser.skip("\n\n".utf8).take(foldsParser)
-        .map { dots, folds in (dots: dots, folds: folds) }
+    static let instructionsParser = Parse { dots, folds in (dots: dots, folds: folds) } with: {
+        dotsParser
+        "\n\n"
+        foldsParser
+        Skip { Optionally { "\n" } }
+    }
 }
 
 extension Day13Tests {

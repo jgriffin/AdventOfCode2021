@@ -12,21 +12,24 @@ final class Day07Tests: XCTestCase {
 
     let example = "16,1,2,0,4,2,7,1,2,14"
 
-    let positionsParser = Many(Int.parser(), separator: ",")
+    let positionsParser = Parse {
+        Many { Int.parser() } separator: { "," }
+        Skip { Optionally { "\n" }}
+    }
 
     func testParseExample() {
-        let postions = positionsParser.parse(example)
+        let postions = try! positionsParser.parse(example)
         XCTAssertEqual(postions, [16, 1, 2, 0, 4, 2, 7, 1, 2, 14])
     }
 
     func testParseInput() {
-        let postions = positionsParser.parse(input)
-        XCTAssertEqual(postions?.count, 1000)
-        XCTAssertEqual(postions?.last, 241)
+        let postions = try! positionsParser.parse(input)
+        XCTAssertEqual(postions.count, 1000)
+        XCTAssertEqual(postions.last, 241)
     }
 
     func testBestPositionExample() {
-        let positions = positionsParser.parse(example)!
+        let positions = try! positionsParser.parse(example)
         let minMax = positions.minAndMax()!
         let range = minMax.min ... minMax.max
 
@@ -40,7 +43,7 @@ final class Day07Tests: XCTestCase {
     }
 
     func testBestPositionInput() {
-        let positions = positionsParser.parse(input)!
+        let positions = try! positionsParser.parse(input)
         let minMax = positions.minAndMax()!
         let range = minMax.min ... minMax.max
 
@@ -54,7 +57,7 @@ final class Day07Tests: XCTestCase {
     }
 
     func testBestIncreasingPositionExample() {
-        let positions = positionsParser.parse(example)!
+        let positions = try! positionsParser.parse(example)
         let minMax = positions.minAndMax()!
         let range = minMax.min ... minMax.max
 
@@ -68,7 +71,7 @@ final class Day07Tests: XCTestCase {
     }
 
     func testBestIncreasingPositionInput() {
-        let positions = positionsParser.parse(input)!
+        let positions = try! positionsParser.parse(input)
         let minMax = positions.minAndMax()!
         let range = minMax.min ... minMax.max
 

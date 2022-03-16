@@ -29,15 +29,15 @@ final class Day16Tests: XCTestCase {
         ]
 
         tests.forEach { test in
-            let result = Self.packetHexParser.parse(test.hex)
+            let result = try! Self.packetHexParser.parse(test.hex)
 //            print(result!.description)
-            XCTAssertEqual(result?.value, test.value, test.hex)
+            XCTAssertEqual(result.value, test.value, test.hex)
         }
     }
 
     func testValueInput() {
-        let result = Self.packetHexParser.parse(input)
-        XCTAssertEqual(result?.value, 831_996_589_851)
+        let result = try! Self.packetHexParser.parse(input)
+        XCTAssertEqual(result.value, 831_996_589_851)
 //        print(result!.description)
     }
 
@@ -52,34 +52,34 @@ final class Day16Tests: XCTestCase {
         ]
 
         tests.forEach { test in
-            let package = Self.packetHexParser.parse(test.hex)
-            XCTAssertEqual(package?.versionSum, test.verSum)
+            let package = try! Self.packetHexParser.parse(test.hex)
+            XCTAssertEqual(package.versionSum, test.verSum)
         }
     }
 
     func testVersionSumInput() {
-        let package = Self.packetHexParser.parse(input)
-        XCTAssertEqual(package?.versionSum, 971)
+        let package = try! Self.packetHexParser.parse(input)
+        XCTAssertEqual(package.versionSum, 971)
     }
 
     // MARK: - parser tests
 
     func testParseLiteralExample() {
-        let bin = Self.hex2BinParser.parse(literalExample)!
+        let bin = try! Self.hex2BinParser.parse(literalExample)
         XCTAssertEqual(bin, Substring("110100101111111000101000"))
-        let literalPacket = PP.literalParser.parse(bin)!
+        let literalPacket = try! PP.literalParser.parse(bin)
         XCTAssertEqual(literalPacket, .literal(ver: 6, value: 2021))
 
-        let literalPacket2 = PP.literalParser.parse("11010001010")!
+        let literalPacket2 = try! PP.literalParser.parse("11010001010")
         XCTAssertEqual(literalPacket2, .literal(ver: 6, value: 10))
 
-        let literalPacket3 = PP.literalParser.parse("0101001000100100")!
+        let literalPacket3 = try! PP.literalParser.parse("0101001000100100")
         XCTAssertEqual(literalPacket3, .literal(ver: 2, value: 20))
     }
 
     func testParseOpLengthExample() {
-        let bin = Self.hex2BinParser.parse(opLengthExample)!
-        let packet = PP.operationParser.parse(bin)!
+        let bin = try! Self.hex2BinParser.parse(opLengthExample)
+        let packet = try! PP.operationParser.parse(bin)
 
         guard case let .op(ver, op, subpackets) = packet else { fatalError() }
 
@@ -91,8 +91,8 @@ final class Day16Tests: XCTestCase {
     }
 
     func testParseOpCountExample() {
-        let bin = Self.hex2BinParser.parse(opCountExample)!
-        let packet = PP.operationParser.parse(bin)!
+        let bin = try! Self.hex2BinParser.parse(opCountExample)
+        let packet = try! PP.operationParser.parse(bin)
 
         guard case let .op(ver, op, subpackets) = packet else { fatalError() }
 
@@ -106,7 +106,10 @@ final class Day16Tests: XCTestCase {
 
     static let hex2BinParser = Prefix<Substring>(while: { $0.isHexDigit })
         .map { Substring($0.flatMap { hex2Bin[$0]! }) }
-    static let packetHexParser = hex2BinParser.pipe(PP.packetParser)
+    static let packetHexParser = Parse {
+        hex2BinParser.pipe { PP.packetParser }
+        Skip { Optionally { "\n" } }
+    }
 }
 
 extension Day16Tests {
@@ -201,91 +204,61 @@ extension Day16Tests {
     typealias PP = PacketParser
 
     enum PacketParser {
-        static let packetParser = literalParser.orElse(operationParser)
+        static let packetParser = OneOf { literalParser; operationParser }
 
         // MARK: literal parser
 
-        static let literalParser = versionParser.skip("100").take(literalValueParser)
-            .map { Packet.literal(ver: $0, value: $1) }
+        static let literalParser = Parse { Packet.literal(ver: $0, value: $1) } with: {
+            versionParser
+            "100"
+            literalValueParser
+        }
 
-        static let literalValueParser = LiteralValueParser()
-
-        struct LiteralValueParser: Parser {
-            func parse(_ input: inout Substring) -> Int? {
-                let originalInput = input
-
-                func restoreInputAndNil() -> Int? {
-                    input = originalInput
-                    return nil
-                }
-
-//                // strip leading zeros
-//                guard let _ = Prefix(while: { $0 == "0" }).parse(&input) else {
-//                    return restoreInputAndNil()
-//                }
-
-                // take chunks starting with 1
-                guard let oneChunks = Many(Skip("1").take(Prefix(4))).parse(&input) else {
-                    return restoreInputAndNil()
-                }
-
-                // last chunk starts with 0
-                guard let zeroChunk = Skip("0").take(Prefix(4)).parse(&input) else {
-                    return restoreInputAndNil()
-                }
-
-                return intFromBin(oneChunks.joined() + zeroChunk)
-            }
-
-            static let literalGroupsParser = Skip(extraZeros).take(Many(literalGroupParser)).skip(extraZeros)
-            static let literalGroupParser = Skip(First()).take(Prefix<Substring>(4))
+        static let literalValueParser = Parse {
+            oneChunks, zeroChunk in intFromBin(oneChunks.joined() + zeroChunk)
+        } with: {
+            Many { "1"; Prefix(4) }
+            "0"; Prefix(4)
         }
 
         // MARK: operation parser
 
-        static let operationParser = versionParser.take(typeIdParser).take(operationSubparsersParser)
-            .map { Packet.op(ver: $0, op: Operation(rawValue: $1)!, packets: $2) }
+        static let operationParser = Parse { Packet.op(ver: $0, op: Operation(rawValue: $1)!, packets: $2) } with: {
+            versionParser
+            typeIdParser
+            operationSubparsersParser
+        }
+
         static let typeIdParser = intFromBinParser(3)
         static let operationSubparsersParser = OpSubParsersParser()
 
         struct OpSubParsersParser: Parser {
-            func parse(_ input: inout Substring) -> [Packet]? {
+            func parse(_ input: inout Substring) throws -> [Packet] {
                 let originalInput = input
 
-                func restoreInputAndNil() -> [Packet]? {
+                do {
+                    let lengthType = try Self.opLengthTypeParser.parse(&input)
+
+                    switch lengthType {
+                    case let .bits(bitCount):
+                        let result = try Prefix(bitCount).parse(&input)
+                        return try Many { PacketParser.packetParser }.parse(result)
+
+                    case let .count(packetCount):
+                        return try Many(atLeast: packetCount, atMost: packetCount) {
+                            PacketParser.packetParser
+                        }.parse(&input)
+                    }
+                } catch {
                     input = originalInput
-                    return nil
-                }
-
-                guard let lengthType = Self.opLengthTypeParser.parse(&input) else {
-                    return restoreInputAndNil()
-                }
-
-                switch lengthType {
-                case let .bits(bitCount):
-                    guard let result = Prefix(bitCount)
-                        .pipe(Many(PacketParser.packetParser))
-                        .parse(&input)
-                    else {
-                        return restoreInputAndNil()
-                    }
-                    return result
-
-                case let .count(packetCount):
-                    guard let result = Many(PacketParser.packetParser,
-                                            atLeast: packetCount, atMost: packetCount)
-                        .parse(&input)
-                    else {
-                        return restoreInputAndNil()
-                    }
-                    return result
+                    throw error
                 }
             }
 
-            static let opLengthTypeParser = OneOfMany(
-                Skip("0").take(intFromBinParser(15)).map { SubLengthType.bits($0) },
-                Skip("1").take(intFromBinParser(11)).map { SubLengthType.count($0) }
-            ).eraseToAnyParser()
+            static let opLengthTypeParser = OneOf {
+                Parse { SubLengthType.bits($0) } with: { Skip { "0" }; intFromBinParser(15) }
+                Parse { SubLengthType.count($0) } with: { Skip { "1" }; intFromBinParser(11) }
+            }.eraseToAnyParser()
         }
 
         // MARK: utils
@@ -300,7 +273,7 @@ extension Day16Tests {
 
         static let versionParser = intFromBinParser(3)
 
-        static let extraZeros = Many("0", atMost: 3)
+        static let extraZeros = Many(atMost: 3) { "0" }
     }
 }
 

@@ -15,15 +15,18 @@ final class Day06Tests: XCTestCase {
     3,4,3,1,2
     """
 
-    static let timerParser = Many(Int.parser(), separator: ",")
+    static let timerParser = Parse {
+        Many { Int.parser() } separator: { "," }
+        Skip { Optionally { "\n" } }
+    }
 
-    func testParseExample() {
-        let timers = Self.timerParser.parse(example)
+    func testParseExample() throws {
+        let timers = try Self.timerParser.parse(example)
         XCTAssertEqual(timers, [3, 4, 3, 1, 2])
     }
 
-    func testParseInput() {
-        let timers = Self.timerParser.parse(input)!
+    func testParseInput() throws {
+        let timers = try Self.timerParser.parse(input)
         XCTAssertEqual(timers.count, 300)
         XCTAssertEqual(timers.last, 3)
     }
@@ -45,8 +48,8 @@ final class Day06Tests: XCTestCase {
         XCTAssertEqual(advanced5, [5, 7])
     }
 
-    func testAdvance80Example() {
-        let timers = Self.timerParser.parse(example)!
+    func testAdvance80Example() throws {
+        let timers = try Self.timerParser.parse(example)
 
         let advanced18 = advanceTimers(timers, times: 18)
         XCTAssertEqual(advanced18.count, 26)
@@ -55,8 +58,8 @@ final class Day06Tests: XCTestCase {
         XCTAssertEqual(advanced80.count, 5934)
     }
 
-    func testAdvance80Input() {
-        let timers = Self.timerParser.parse(input)!
+    func testAdvance80Input() throws {
+        let timers = try Self.timerParser.parse(input)
 
         let advanced80 = advanceTimers(timers, times: 80)
         XCTAssertEqual(advanced80.count, 380_612)
@@ -94,8 +97,8 @@ final class Day06Tests: XCTestCase {
         XCTAssertEqual(fishCountFrom(advanced5), 2)
     }
 
-    func testAdvanceTimerCounts80Example() {
-        let timers = Self.timerParser.parse(example)!
+    func testAdvanceTimerCounts80Example() throws {
+        let timers = try Self.timerParser.parse(example)
         let timerCounts = timerCountsFrom(timers)
         XCTAssertEqual(fishCountFrom(timerCounts), 5)
 
@@ -106,16 +109,16 @@ final class Day06Tests: XCTestCase {
         XCTAssertEqual(fishCountFrom(advanced80), 5934)
     }
 
-    func testAdvanceTimerCounts256Example() {
-        let timers = Self.timerParser.parse(example)!
+    func testAdvanceTimerCounts256Example() throws {
+        let timers = try Self.timerParser.parse(example)
         let timerCounts = timerCountsFrom(timers)
 
         let advanced256 = advanceTimerCounts(timerCounts, times: 256)
         XCTAssertEqual(fishCountFrom(advanced256), 26_984_457_539)
     }
 
-    func testAdvanceTimerCounts256Input() {
-        let timers = Self.timerParser.parse(input)!
+    func testAdvanceTimerCounts256Input() throws {
+        let timers = try Self.timerParser.parse(input)
         let timerCounts = timerCountsFrom(timers)
 
         let advanced256 = advanceTimerCounts(timerCounts, times: 256)

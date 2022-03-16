@@ -15,11 +15,15 @@ final class Day17Tests: XCTestCase {
 
     // MARK: - parser
 
-    static let intParser = Int.parser(of: Substring.UTF8View.self)
-    static let rangeParser = intParser.skip("..".utf8).take(intParser)
-        .map { $0 ... $1 }
-    static let inputParser = Skip("target area: x=".utf8).take(rangeParser).skip(", y=".utf8).take(rangeParser)
-        .map { TargetRange(x: $0, y: $1) }
+    static let intParser = Int.parser(of: Substring.self)
+    static let rangeParser = Parse { $0 ... $1 } with: { intParser; ".."; intParser }
+    static let inputParser = Parse { TargetRange(x: $0, y: $1) } with: {
+        Skip { "target area: x=" }
+        rangeParser
+        ", y="
+        rangeParser
+        Skip { Optionally { "\n" } }
+    }
 
     func testHighestVelocityExample() {
         let target = exampleTarget
@@ -58,12 +62,12 @@ final class Day17Tests: XCTestCase {
     // MARK: parsing
 
     func testParseExample() {
-        let ranges = Self.inputParser.parse(example)!
+        let ranges = try! Self.inputParser.parse(example)
         XCTAssertEqual(ranges, TargetRange(x: 20 ... 30, y: -10 ... -5))
     }
 
     func testParseInput() {
-        let ranges = Self.inputParser.parse(input)!
+        let ranges = try! Self.inputParser.parse(input)
         XCTAssertEqual(ranges, TargetRange(x: 217 ... 240, y: -126 ... -69))
     }
 }

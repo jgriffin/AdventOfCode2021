@@ -21,36 +21,39 @@ final class Day09Tests: XCTestCase {
 
     typealias HeightMap = [[Int]]
 
-    static let heightLine = Prefix(1..., while: { $0.isNumber }).utf8
+    static let heightLine = Prefix(1..., while: { $0.isNumber })
         .map { $0.map { Int(String($0))! } }
-    static let heightsParser = Many(heightLine, separator: "\n".utf8)
+    static let heightsParser = Parse {
+        Many { heightLine } separator: { "\n" }
+        Skip { Optionally { "\n" }}
+    }
 
     func testParseExample() {
-        let heights = Self.heightsParser.parse(example)!
+        let heights = try! Self.heightsParser.parse(example)
         XCTAssertEqual(heights.count, 5)
         XCTAssertEqual(heights.last, [9, 8, 9, 9, 9, 6, 5, 6, 7, 8])
     }
 
     func testParseInput() {
-        let heights = Self.heightsParser.parse(input)!
+        let heights = try! Self.heightsParser.parse(input)
         XCTAssertEqual(heights.count, 100)
         XCTAssertEqual(heights.last?.last, 1)
     }
 
     func testRiskLevelExample() {
-        let heights = Self.heightsParser.parse(example)!
+        let heights = try! Self.heightsParser.parse(example)
         let riskLevel = riskLevel(heights)
         XCTAssertEqual(riskLevel, 15)
     }
 
     func testRiskLevelInput() {
-        let heights = Self.heightsParser.parse(input)!
+        let heights = try! Self.heightsParser.parse(input)
         let riskLevel = riskLevel(heights)
         XCTAssertEqual(riskLevel, 532)
     }
 
     func testBasinsExample() {
-        let heights = Self.heightsParser.parse(example)!
+        let heights = try! Self.heightsParser.parse(example)
 
         let basinMap = basinMapFrom(heights)
         let basinAddresses = basinMap.reduce(into: [Basin: [Address]]()) { result, next in
@@ -65,7 +68,7 @@ final class Day09Tests: XCTestCase {
     }
 
     func testBasinsInput() {
-        let heights = Self.heightsParser.parse(input)!
+        let heights = try! Self.heightsParser.parse(input)
 
         let basinMap = basinMapFrom(heights)
         let basinAddresses = basinMap.reduce(into: [Basin: [Address]]()) { result, next in

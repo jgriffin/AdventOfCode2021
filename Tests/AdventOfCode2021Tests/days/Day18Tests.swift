@@ -27,7 +27,7 @@ final class Day18Tests: XCTestCase {
     }
 
     func testLargestSumExample() {
-        let numbers = Self.numbersParser.parse(magnitudeExample)!
+        let numbers = try! Self.numbersParser.parse(magnitudeExample)
         let sumMagnitudes = numbers.permutations(ofCount: 2)
             .map { ($0, magnitude: ($0[0] + $0[1]).magnitude) }
         let largest = sumMagnitudes.max { $0.magnitude < $1.magnitude }
@@ -36,7 +36,7 @@ final class Day18Tests: XCTestCase {
     }
 
     func testLargestSumInput() {
-        let numbers = Self.numbersParser.parse(input)!
+        let numbers = try! Self.numbersParser.parse(input)
         let sumMagnitudes = numbers.permutations(ofCount: 2)
             .map { ($0, magnitude: ($0[0] + $0[1]).magnitude) }
         let largest = sumMagnitudes.max { $0.magnitude < $1.magnitude }
@@ -45,7 +45,7 @@ final class Day18Tests: XCTestCase {
     }
 
     func testMagnitudeExample() {
-        let numbers = Self.numbersParser.parse(magnitudeExample)!
+        let numbers = try! Self.numbersParser.parse(magnitudeExample)
         let sum = numbers.reduce(.empty, +)
         let magnitude = sum.magnitude
 
@@ -53,7 +53,7 @@ final class Day18Tests: XCTestCase {
     }
 
     func testMagnitudeInput() {
-        let numbers = Self.numbersParser.parse(input)!
+        let numbers = try! Self.numbersParser.parse(input)
         let sum = numbers.reduce(.empty, +)
         let magnitude = sum.magnitude
 
@@ -101,7 +101,7 @@ final class Day18Tests: XCTestCase {
         """
         let check = Snailfish("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]")
 
-        let numbers = Self.numbersParser.parse(test)!
+        let numbers = try! Self.numbersParser.parse(test)
         XCTAssertEqual(numbers.count, 10)
 
         let sum = numbers.reduce(.empty, +)
@@ -140,17 +140,19 @@ final class Day18Tests: XCTestCase {
 
     // MARK: - parser
 
-    static let numbersParser = Many(SnailfishParser.snailfishParser, separator: "\n".utf8)
-        .skip(Optional.parser(of: "\n".utf8))
-        .skip(End())
+    static let numbersParser = Parse {
+        Many { SnailfishParser.snailfishParser } separator: { "\n".utf8 }
+        Skip { Optionally { "\n".utf8 } }
+        End()
+    }
 
     func testParseExample() {
-        let lines = Self.numbersParser.parse(magnitudeExample)!
+        let lines = try! Self.numbersParser.parse(magnitudeExample)
         XCTAssertEqual(lines.count, 10)
     }
 
     func testParseInput() {
-        let input = Self.numbersParser.parse(input)!
+        let input = try! Self.numbersParser.parse(input)
         XCTAssertEqual(input.count, 100)
     }
 }
@@ -184,7 +186,7 @@ extension Day18Tests {
         }
 
         init(_ string: String) {
-            self = SnailfishParser.snailfishParser.parse(string)!
+            self = try! SnailfishParser.snailfishParser.parse(string)
         }
 
         static let empty = Snailfish([])
@@ -233,9 +235,9 @@ extension Day18Tests {
         static let openParser = "[".utf8.map { Token.open }
         static let closeParser = "]".utf8.map { Token.close }
         static let commaParser = ",".utf8.map { Token.comma }
-        static let numberParser = Int.parser().utf8.map { Token.number($0) }
-        static let tokenParser = openParser.orElse(closeParser).orElse(numberParser).orElse(commaParser)
-        static let snailfishParser = Many(tokenParser, atLeast: 1).map { Snailfish($0) }
+        static let numberParser = Int.parser(of: String.UTF8View.SubSequence.self).map { Token.number($0) }
+        static let tokenParser = OneOf { openParser; closeParser; numberParser; commaParser }
+        static let snailfishParser = Many(atLeast: 1) { tokenParser }.map { Snailfish($0) }
     }
 
     // MARK: - reduce

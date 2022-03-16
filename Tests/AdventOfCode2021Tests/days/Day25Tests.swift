@@ -11,13 +11,13 @@ final class Day25Tests: XCTestCase {
     let input = resourceURL(filename: "Day25Input.txt")!.readContents()!
 
     func testStableExample() {
-        var sea = Self.seaParser.parse(example)!
+        var sea = try! Self.seaParser.parse(example)
         let result = sea.moveUntilStable()
         XCTAssertEqual(result, 58)
     }
 
     func testStableInput() {
-        var sea = Self.seaParser.parse(input)!
+        var sea = try! Self.seaParser.parse(input)
         let result = sea.moveUntilStable()
         XCTAssertEqual(result, 378)
     }
@@ -114,23 +114,25 @@ extension Day25Tests {
 
     // MARK: - parser
 
-    static let cucumberParser = OneOfMany(
-        ".".utf8.map { Cucumber.empty },
-        ">".utf8.map { Cucumber.e },
-        "v".utf8.map { Cucumber.s }
-    )
-    static let seaParser = Many(Many(cucumberParser, atLeast: 1), separator: "\n".utf8)
-        .skip(Optional.parser(of: "\n".utf8))
-        .skip(End())
-        .map { Sea($0) }
+    static let cucumberParser = OneOf {
+        ".".map { Cucumber.empty }
+        ">".map { Cucumber.e }
+        "v".map { Cucumber.s }
+    }
+
+    static let seaParser = Parse { Sea($0) } with: {
+        Many { Many(atLeast: 1) { cucumberParser } } separator: { "\n" }
+        Skip { Optionally { "\n" }}
+        End()
+    }
 
     func testParseExample() {
-        let input = Self.seaParser.parse(example)!
+        let input = try! Self.seaParser.parse(example)
         XCTAssertNotNil(input)
     }
 
     func testParseInput() {
-        let input = Self.seaParser.parse(input)!
+        let input = try! Self.seaParser.parse(input)
         XCTAssertNotNil(input)
     }
 }

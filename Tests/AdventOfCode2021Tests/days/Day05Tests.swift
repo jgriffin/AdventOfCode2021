@@ -26,26 +26,39 @@ final class Day05Tests: XCTestCase {
     5,5 -> 8,2
     """
 
-    static let coordinateParser = Int.parser().skip(",").take(Int.parser())
-        .map { Coordinate(x: $0, y: $1) }
-    static let lineParser = coordinateParser.skip(" -> ").take(coordinateParser)
-        .map { Line(from: $0, to: $1) }
-    static let linesParser = Many(lineParser, atLeast: 1, separator: "\n").skip(Optional.parser(of: "\n"))
+    static let coordinateParser =
+        Parse { Coordinate(x: $0, y: $1) } with: {
+            Int.parser()
+            ","
+            Int.parser()
+        }
+
+    static let lineParser =
+        Parse { Line(from: $0, to: $1) } with: {
+            coordinateParser
+            " -> "
+            coordinateParser
+        }
+
+    static let linesParser = Parse {
+        Many(atLeast: 1) { lineParser } separator: { "\n" }
+        Skip { Optionally { "\n" } }
+    }
 
     func testParseExample() {
-        let lines = Self.linesParser.parse(example)!
+        let lines = try! Self.linesParser.parse(example)
         XCTAssertEqual(lines.count, 10)
         XCTAssertEqual(lines.last, Line(from: .init(x: 5, y: 5), to: .init(x: 8, y: 2)))
     }
 
     func testParseInput() {
-        let lines = Self.linesParser.parse(input)!
+        let lines = try! Self.linesParser.parse(input)
         XCTAssertEqual(lines.count, 500)
         XCTAssertEqual(lines.last, Line(from: .init(x: 120, y: 156), to: .init(x: 120, y: 630)))
     }
 
     func testHVExample() {
-        let hvLines = Self.linesParser.parse(example)!
+        let hvLines = try! Self.linesParser.parse(example)
             .filter(\.isHorizontalOrVertical)
 
         let hvField = Field.fromLines(hvLines)
@@ -53,20 +66,20 @@ final class Day05Tests: XCTestCase {
     }
 
     func testHVFieldInput() {
-        let lines = Self.linesParser.parse(input)!
+        let lines = try! Self.linesParser.parse(input)
         let hvLines = lines.filter(\.isHorizontalOrVertical)
         let hvField = Field.fromLines(hvLines)
         XCTAssertEqual(hvField.overlappingCount, 6311)
     }
 
     func testDiagonalExample() {
-        let lines = Self.linesParser.parse(example)!
+        let lines = try! Self.linesParser.parse(example)
         let field = Field.fromLines(lines)
         XCTAssertEqual(field.overlappingCount, 12)
     }
 
     func testDiagonalInput() {
-        let lines = Self.linesParser.parse(input)!
+        let lines = try! Self.linesParser.parse(input)
         let field = Field.fromLines(lines)
         XCTAssertEqual(field.overlappingCount, 19929)
     }

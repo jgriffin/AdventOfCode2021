@@ -33,13 +33,19 @@ final class Day04Tests: XCTestCase {
      2  0 12  3  7
     """
 
-    static let numbersParser = Many(Int.parser(), separator: ",")
-    static let boardNumber = Skip(Optional.parser(of: " ")).take(Int.parser())
-    static let rowParser = Many(boardNumber, atLeast: 1, separator: " ")
-    static let boardParser = Many(rowParser, separator: "\n").map(Board.init)
-    static let boardsParser = Many(boardParser, separator: "\n\n")
-    static let inputParser = numbersParser.skip("\n\n").take(boardsParser)
-        .map { numbers, boards in GameState(boards: boards, numbers: numbers) }
+    static let numbersParser = Many { Int.parser() } separator: { "," }
+    static let boardNumber = Parse { Skip { Optionally { " " }}; Int.parser() }
+    static let rowParser = Many(atLeast: 1) { boardNumber } separator: { " " }
+    static let boardParser = Many { rowParser } separator: { "\n" }.map(Board.init)
+    static let boardsParser = Many { boardParser } separator: { "\n\n" }
+    static let inputParser = Parse {
+        numbers, boards in GameState(boards: boards, numbers: numbers)
+    } with: {
+        numbersParser
+        "\n\n"
+        boardsParser
+        Skip { Optionally { "\n" }}
+    }
 
     struct Board {
         let rows: [[Int]]
@@ -124,7 +130,7 @@ final class Day04Tests: XCTestCase {
     }
 
     func testParseExample() {
-        let game = Self.inputParser.parse(example)!
+        let game = try! Self.inputParser.parse(example)
         XCTAssertEqual(game.numbers.last, 1)
 
         print(game.boards)
@@ -133,14 +139,14 @@ final class Day04Tests: XCTestCase {
     }
 
     func testParseInput() {
-        let game = Self.inputParser.parse(input)!
+        let game = try! Self.inputParser.parse(input)
         XCTAssertEqual(game.numbers.last, 11)
         XCTAssertEqual(game.boards.count, 100)
         XCTAssertEqual(game.boards.last?.rows.last, [17, 49, 91, 30, 33])
     }
 
     func testWinnerExample() {
-        var game = Self.inputParser.parse(example)!
+        var game = try! Self.inputParser.parse(example)
 
         let winner = game.drawUntilWinner()
         let score = winner!.score(drawnNumbers: game.drawnNumbers)
@@ -148,7 +154,7 @@ final class Day04Tests: XCTestCase {
     }
 
     func testWinnerInput() {
-        var game = Self.inputParser.parse(input)!
+        var game = try! Self.inputParser.parse(input)
 
         let winner = game.drawUntilWinner()
         let score = winner!.score(drawnNumbers: game.drawnNumbers)
@@ -156,7 +162,7 @@ final class Day04Tests: XCTestCase {
     }
 
     func testLastWinnerExample() {
-        var game = Self.inputParser.parse(example)!
+        var game = try! Self.inputParser.parse(example)
 
         let winner = game.drawUntilLastWinner()
         let score = winner!.score(drawnNumbers: game.drawnNumbers)
@@ -164,7 +170,7 @@ final class Day04Tests: XCTestCase {
     }
 
     func testLastWinnerInput() {
-        var game = Self.inputParser.parse(input)!
+        var game = try! Self.inputParser.parse(input)
 
         let winner = game.drawUntilLastWinner()
         let score = winner!.score(drawnNumbers: game.drawnNumbers)

@@ -25,7 +25,7 @@ final class Day20Tests: XCTestCase {
     // MARK: - enhance fifty
 
     func testEnhanceFiftyExample() {
-        let (enhancements, imageString) = Self.inputParser.parse(example)!
+        let (enhancements, imageString) = try! Self.inputParser.parse(example)
         let image = Image(imageString)
         let enhancer = Enhancer(enhancementPixels: enhancements.asArray)
 
@@ -37,7 +37,7 @@ final class Day20Tests: XCTestCase {
     }
 
     func testEnhanceInputExample() {
-        let (enhancements, imageString) = Self.inputParser.parse(input)!
+        let (enhancements, imageString) = try! Self.inputParser.parse(input)
         let image = Image(imageString)
         let enhancer = Enhancer(enhancementPixels: enhancements.asArray)
 
@@ -51,7 +51,7 @@ final class Day20Tests: XCTestCase {
     // MARK: - enhance twice
 
     func testEnhanceTwiceExample() {
-        let (enhancements, imageString) = Self.inputParser.parse(example)!
+        let (enhancements, imageString) = try! Self.inputParser.parse(example)
         let image = Image(imageString)
         let enhancer = Enhancer(enhancementPixels: enhancements.asArray)
 
@@ -63,7 +63,7 @@ final class Day20Tests: XCTestCase {
     }
 
     func testEnhanceTwiceInput() {
-        let (enhancements, imageString) = Self.inputParser.parse(input)!
+        let (enhancements, imageString) = try! Self.inputParser.parse(input)
         let enhancer = Enhancer(enhancementPixels: enhancements.asArray)
         let image = Image(imageString)
 
@@ -211,18 +211,23 @@ extension Day20Tests {
 
     static func isPixelChar(_ c: Character) -> Bool { c == Image.light || c == Image.dark }
 
-    static let enhancementPixelsParser = Prefix(512, while: isPixelChar).utf8
-    static let imageStringParser = Many(Prefix(1..., while: isPixelChar).utf8, atLeast: 1, separator: "\n".utf8)
-    static let inputParser = enhancementPixelsParser.skip("\n\n".utf8).take(imageStringParser)
+    static let enhancementPixelsParser = Prefix(512, while: isPixelChar)
+    static let imageStringParser = Many(atLeast: 1) { Prefix(1..., while: isPixelChar) } separator: { "\n" }
+    static let inputParser = Parse {
+        enhancementPixelsParser
+        "\n\n"
+        imageStringParser
+        Skip { Optionally { "\n" } }
+    }
 
     func testParseExample() {
-        let (enhancement, inputImage) = Self.inputParser.parse(example)!
+        let (enhancement, inputImage) = try! Self.inputParser.parse(example)
         XCTAssertNotNil(enhancement)
         XCTAssertNotNil(inputImage)
     }
 
     func testParseInput() {
-        let (_, inputString) = Self.inputParser.parse(input)!
+        let (_, inputString) = try! Self.inputParser.parse(input)
         XCTAssertEqual(inputString.count, 100)
         XCTAssertEqual(inputString.last?.suffix(5), "#.#.#")
     }

@@ -34,7 +34,7 @@ final class Day14Tests: XCTestCase {
     }
 
     func testExpander40Example() async {
-        let (template, insertions) = Self.templatesAndInsertions.parse(example)!
+        let (template, insertions) = try! Self.templatesAndInsertions.parse(example)
         let insMap = insertionMapFrom(insertions)
         let expander = Expander(insertionMap: insMap)
 
@@ -46,7 +46,7 @@ final class Day14Tests: XCTestCase {
     }
 
     func testExpander40Input() async {
-        let (template, insertions) = Self.templatesAndInsertions.parse(input)!
+        let (template, insertions) = try! Self.templatesAndInsertions.parse(input)
         let insMap = insertionMapFrom(insertions)
         let expander = Expander(insertionMap: insMap)
 
@@ -58,7 +58,7 @@ final class Day14Tests: XCTestCase {
     }
 
     func testExpander10Example() async {
-        let (template, insertions) = Self.templatesAndInsertions.parse(example)!
+        let (template, insertions) = try! Self.templatesAndInsertions.parse(example)
         let insMap = insertionMapFrom(insertions)
         let expander = Expander(insertionMap: insMap)
 
@@ -70,7 +70,7 @@ final class Day14Tests: XCTestCase {
     }
 
     func testExpander10Input() async {
-        let (template, insertions) = Self.templatesAndInsertions.parse(input)!
+        let (template, insertions) = try! Self.templatesAndInsertions.parse(input)
         let insMap = insertionMapFrom(insertions)
         let expander = Expander(insertionMap: insMap)
 
@@ -83,7 +83,7 @@ final class Day14Tests: XCTestCase {
     }
 
     func testApplyPreExpandedInsertions10Example() {
-        let (template, insertions) = Self.templatesAndInsertions.parse(example)!
+        let (template, insertions) = try! Self.templatesAndInsertions.parse(example)
         let insMap = insertionMapFrom(insertions)
 
         let expanded10InsMap = expandInsMap(insMap, times: 10)
@@ -95,7 +95,7 @@ final class Day14Tests: XCTestCase {
     }
 
     func testApplyInsertions10Example() {
-        let (template, insertions) = Self.templatesAndInsertions.parse(example)!
+        let (template, insertions) = try! Self.templatesAndInsertions.parse(example)
         let insMap = insertionMapFrom(insertions)
 
         let step1 = applyInsertions(insMap, to: template)
@@ -111,7 +111,7 @@ final class Day14Tests: XCTestCase {
     }
 
     func testApplyInsertions10Input() {
-        let (template, insertions) = Self.templatesAndInsertions.parse(input)!
+        let (template, insertions) = try! Self.templatesAndInsertions.parse(input)
         let insMap = insertionMapFrom(insertions)
 
         let step1 = applyInsertions(insMap, to: template)
@@ -129,14 +129,14 @@ final class Day14Tests: XCTestCase {
     // MARK: - parsing
 
     func testParseExample() {
-        let (template, insertions) = Self.templatesAndInsertions.parse(example)!
+        let (template, insertions) = try! Self.templatesAndInsertions.parse(example)
         XCTAssertEqual(template, "NNCB")
         XCTAssertEqual(insertions.count, 16)
         XCTAssertEqual(insertions.last?.ins, "C")
     }
 
     func testParseInput() {
-        let (template, insertions) = Self.templatesAndInsertions.parse(input)!
+        let (template, insertions) = try! Self.templatesAndInsertions.parse(input)
         XCTAssertEqual(template, "KFFNFNNBCNOBCNPFVKCP")
         XCTAssertEqual(insertions.count, 100)
         XCTAssertEqual(insertions.last?.ins, "H")
@@ -147,14 +147,21 @@ final class Day14Tests: XCTestCase {
         let ins: Substring
     }
 
-    static let templateParser = Prefix(while: { $0.isLetter }).utf8
-    static let insertionParser = Prefix(while: { $0.isLetter }).utf8.skip(" -> ".utf8)
-        .take(Prefix(1).utf8)
-        .map { Insertion(pair: $0, ins: $1) }
-    static let insertionsParser = Many(insertionParser, separator: "\n".utf8)
-    static let templatesAndInsertions = templateParser.map { String($0) }
-        .skip("\n\n".utf8)
-        .take(insertionsParser)
+    static let templateParser = Prefix(while: { $0.isLetter })
+    static let insertionParser =
+        Parse { Insertion(pair: $0, ins: $1) } with: {
+            Prefix(while: { $0.isLetter })
+            " -> "
+            First().map { String($0)[...] }
+        }
+
+    static let insertionsParser = Many { insertionParser } separator: { "\n" }
+    static let templatesAndInsertions = Parse {
+        templateParser.map { String($0) }
+        "\n\n"
+        insertionsParser
+        Skip { Optionally { "\n" } }
+    }
 }
 
 extension Day14Tests {

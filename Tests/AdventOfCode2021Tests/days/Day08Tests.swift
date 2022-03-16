@@ -28,20 +28,27 @@ final class Day08Tests: XCTestCase {
     typealias EntryDigits = (wires: [Int], displays: [Int])
     typealias WireSetDigitMap = [WireSet: Int]
 
-    static let wireSetParser = Prefix(1..., while: { $0.isLetter }).utf8.map { WireSet($0) }
-    static let wireSetsParser = Many(wireSetParser, separator: " ".utf8)
-    static let entryParser = wireSetsParser.skip(" | ".utf8).take(wireSetsParser)
-        .map { Entry($0, $1) }
-    static let inputParser = Many(entryParser, separator: "\n".utf8)
+    static let wireSetParser = Prefix(1..., while: { $0.isLetter }).map { WireSet($0) }
+    static let wireSetsParser = Many { wireSetParser } separator: { " " }
+    static let entryParser = Parse { Entry($0, $1) } with: {
+        wireSetsParser
+        " | "
+        wireSetsParser
+    }
+
+    static let inputParser = Parse {
+        Many { entryParser } separator: { "\n" }
+        Skip { Optionally { "\n" } }
+    }
 
     func testParseExample() {
-        let entries = Self.inputParser.parse(example)!
+        let entries = try! Self.inputParser.parse(example)
         XCTAssertEqual(entries.count, 10)
         XCTAssertEqual(entries.last?.displays.last, WireSet("bagce"))
     }
 
     func testParseInput() {
-        let entries = Self.inputParser.parse(input)!
+        let entries = try! Self.inputParser.parse(input)
         XCTAssertEqual(entries.count, 200)
         XCTAssertEqual(entries.last?.displays.last, WireSet("cbgda"))
     }
@@ -49,7 +56,7 @@ final class Day08Tests: XCTestCase {
     let easyDigits = Set([1, 4, 7, 8])
 
     func testSimpleWireSetMapExample() {
-        let entries = Self.inputParser.parse(example)!
+        let entries = try! Self.inputParser.parse(example)
 
         let entriesDisplayDigits = entriesDisplayDigitsFrom(entries)
 
@@ -61,7 +68,7 @@ final class Day08Tests: XCTestCase {
     }
 
     func testSimpleWireSetMapInput() {
-        let entries = Self.inputParser.parse(input)!
+        let entries = try! Self.inputParser.parse(input)
 
         let entriesDisplayDigits = entriesDisplayDigitsFrom(entries)
 
@@ -73,7 +80,7 @@ final class Day08Tests: XCTestCase {
     }
 
     func testAllWireSetMapExample() {
-        let entries = Self.inputParser.parse(example)!
+        let entries = try! Self.inputParser.parse(example)
 
         let entriesDisplayDigits = entriesDisplayDigitsFrom(entries)
         let entriesDisplayNumbers = entriesDisplayDigits.map {
@@ -87,7 +94,7 @@ final class Day08Tests: XCTestCase {
     }
 
     func testAllWireSetMapInput() {
-        let entries = Self.inputParser.parse(input)!
+        let entries = try! Self.inputParser.parse(input)
 
         let entriesDisplayDigits = entriesDisplayDigitsFrom(entries)
         let entriesDisplayNumbers = entriesDisplayDigits.map {

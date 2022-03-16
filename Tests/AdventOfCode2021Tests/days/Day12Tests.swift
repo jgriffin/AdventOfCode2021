@@ -13,7 +13,7 @@ final class Day12Tests: XCTestCase {
     // MARK: cavePaths
 
     func testCavePathsTwiceSmallExample() {
-        let connections = Self.connectionsParser.parse(smallExample)!
+        let connections = try! Self.connectionsParser.parse(smallExample)
 
         let paths = cavePathsToEnd(connections, canRevisitOneSmallCavesTwice)
         let uniquePaths = paths.asSet
@@ -21,14 +21,14 @@ final class Day12Tests: XCTestCase {
     }
 
     func testCavePathsTwiceBiggerExample() {
-        let connections = Self.connectionsParser.parse(biggerExample)!
+        let connections = try! Self.connectionsParser.parse(biggerExample)
 
         let paths = cavePathsToEnd(connections, canRevisitOneSmallCavesTwice)
         XCTAssertEqual(paths.count, 103)
     }
 
     func testCavePathsTwiceInput() {
-        let connections = Self.connectionsParser.parse(input)!
+        let connections = try! Self.connectionsParser.parse(input)
 
         let paths = cavePathsToEnd(connections, canRevisitOneSmallCavesTwice)
         XCTAssertEqual(paths.count, 143_562)
@@ -37,21 +37,21 @@ final class Day12Tests: XCTestCase {
     // MARK: cavePaths
 
     func testCavePathsSmallExample() {
-        let connections = Self.connectionsParser.parse(smallExample)!
+        let connections = try! Self.connectionsParser.parse(smallExample)
 
         let paths = cavePathsToEnd(connections, canRevisitSmallCavesOnce)
         XCTAssertEqual(paths.count, 10)
     }
 
     func testCavePathsBiggerExample() {
-        let connections = Self.connectionsParser.parse(biggerExample)!
+        let connections = try! Self.connectionsParser.parse(biggerExample)
 
         let paths = cavePathsToEnd(connections, canRevisitSmallCavesOnce)
         XCTAssertEqual(paths.count, 19)
     }
 
     func testCavePathsInput() {
-        let connections = Self.connectionsParser.parse(input)!
+        let connections = try! Self.connectionsParser.parse(input)
 
         let paths = cavePathsToEnd(connections, canRevisitSmallCavesOnce)
         XCTAssertEqual(paths.count, 4754)
@@ -60,21 +60,28 @@ final class Day12Tests: XCTestCase {
     // MARK: - parser
 
     func testParser() {
-        let connections = Self.connectionsParser.parse(smallExample)
-        XCTAssertEqual(connections?.count, 7)
+        let connections = try! Self.connectionsParser.parse(smallExample)
+        XCTAssertEqual(connections.count, 7)
 
-        let biggerConnections = Self.connectionsParser.parse(biggerExample)
-        XCTAssertEqual(biggerConnections?.count, 10)
+        let biggerConnections = try! Self.connectionsParser.parse(biggerExample)
+        XCTAssertEqual(biggerConnections.count, 10)
 
-        let inputConnections = Self.connectionsParser.parse(input)
-        XCTAssertEqual(inputConnections?.count, 25)
+        let inputConnections = try! Self.connectionsParser.parse(input)
+        XCTAssertEqual(inputConnections.count, 25)
     }
 
-    static let caveNameParser = Prefix(1..., while: { $0.isLetter }).utf8
+    static let caveNameParser = Prefix(1..., while: { $0.isLetter })
         .map { Cave(name: String($0)) }
-    static let connectionParser = caveNameParser.skip("-".utf8).take(caveNameParser)
-        .map { CaveConnection($0, $1) }
-    static let connectionsParser = Many(connectionParser, atLeast: 1, separator: "\n".utf8)
+    static let connectionParser = Parse { CaveConnection($0, $1) } with: {
+        caveNameParser
+        "-"
+        caveNameParser
+    }
+
+    static let connectionsParser = Parse {
+        Many(atLeast: 1) { connectionParser } separator: { "\n" }
+        Skip { Optionally { "\n" } }
+    }
 
     let smallExample = """
     start-A

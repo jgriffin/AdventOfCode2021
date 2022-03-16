@@ -28,24 +28,27 @@ final class Day03Tests: XCTestCase {
 
     typealias BinaryNumber = [Int]
     static let digitParser = First<Substring>().filter(\.isWholeNumber).map { Int(String($0))! }
-    static let bitsParser = Many(digitParser, atLeast: 1)
-    static let inputParser = Many(bitsParser, atLeast: 1, separator: "\n")
-        .skip(Many("\n"))
+    static let bitsParser = Many(atLeast: 1) { digitParser }
+    static let inputParser = Parse {
+        Many(atLeast: 1) { bitsParser } separator: { "\n" }
+        Skip { Many { "\n" } }
+        End()
+    }
 
-    func testParseExample() {
-        let numbers = Self.inputParser.parse(example)!
+    func testParseExample() throws {
+        let numbers = try Self.inputParser.parse(example)
         XCTAssertEqual(numbers.count, 12)
         XCTAssertEqual(numbers.last, [0, 1, 0, 1, 0])
     }
 
-    func testParseInput() {
-        let numbers = Self.inputParser.parse(input)!
+    func testParseInput() throws {
+        let numbers = try Self.inputParser.parse(input)
         XCTAssertEqual(numbers.count, 1000)
         XCTAssertEqual(numbers.last, [0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1])
     }
 
-    func testCountsExample() {
-        let numbers = Self.inputParser.parse(example)!
+    func testCountsExample() throws {
+        let numbers = try Self.inputParser.parse(example)
         let counts = countBitsByPosition(numbers)
 
         let epsilonBits = counts.map(\.epsilonBit)
@@ -62,8 +65,8 @@ final class Day03Tests: XCTestCase {
         XCTAssertEqual(power, 198)
     }
 
-    func testCountsInput() {
-        let numbers = Self.inputParser.parse(input)!
+    func testCountsInput() throws {
+        let numbers = try Self.inputParser.parse(input)
         let counts = countBitsByPosition(numbers)
 
         let epsilonBits = counts.map(\.epsilonBit)
@@ -80,8 +83,8 @@ final class Day03Tests: XCTestCase {
         XCTAssertEqual(power, 738_234)
     }
 
-    func testFilterExample() {
-        let numbers = Self.inputParser.parse(example)!
+    func testFilterExample() throws {
+        let numbers = try Self.inputParser.parse(example)
 
         let firstDigitCounts = countBits(of: numbers, inPostion: 0)
         XCTAssertEqual(firstDigitCounts, .init(zeros: 5, ones: 7))
@@ -95,8 +98,8 @@ final class Day03Tests: XCTestCase {
         XCTAssertEqual(scrubberFilterd.count, 5)
     }
 
-    func testFilterWithBitExample() {
-        let numbers = Self.inputParser.parse(example)!
+    func testFilterWithBitExample() throws {
+        let numbers = try Self.inputParser.parse(example)
 
         let firstDigitCounts = countBits(of: numbers, inPostion: 0)
         XCTAssertEqual(firstDigitCounts, .init(zeros: 5, ones: 7))
@@ -110,8 +113,8 @@ final class Day03Tests: XCTestCase {
         XCTAssertEqual(scrubberFilterd.count, 5)
     }
 
-    func testScrubberExample() {
-        let numbers = Self.inputParser.parse(example)!
+    func testScrubberExample() throws {
+        let numbers = try Self.inputParser.parse(example)
 
         let oxygenResults = filterByBits(
             numbers,
@@ -133,8 +136,8 @@ final class Day03Tests: XCTestCase {
         XCTAssertEqual(lifeSupportRating, 230)
     }
 
-    func testScrubberInput() {
-        let numbers = Self.inputParser.parse(input)!
+    func testScrubberInput() throws {
+        let numbers = try Self.inputParser.parse(input)
 
         let oxygenResults = filterByBits(
             numbers,

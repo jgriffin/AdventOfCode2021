@@ -11,7 +11,7 @@ final class Day22Tests: XCTestCase {
     let input = resourceURL(filename: "Day22Input.txt")!.readContents()!
 
     func testAllCubesInput() {
-        let steps = Self.stepsParser.parse(input)!
+        let steps = try! Self.stepsParser.parse(input)
 
         let tree = steps.reduce(into: CuboidTree()) { tree, step in
             step.applyToTree(&tree)
@@ -22,7 +22,7 @@ final class Day22Tests: XCTestCase {
     }
 
     func testAllCubesExample() {
-        let steps = Self.stepsParser.parse(allCubesExample)!
+        let steps = try! Self.stepsParser.parse(allCubesExample)
 
         let tree = steps.reduce(into: CuboidTree()) { tree, step in
             step.applyToTree(&tree)
@@ -33,7 +33,7 @@ final class Day22Tests: XCTestCase {
     }
 
     func testFiftiesOnCubesInput() {
-        let steps = Self.stepsParser.parse(input)!
+        let steps = try! Self.stepsParser.parse(input)
 
         let tree = steps.reduce(into: CuboidTree()) { tree, step in
             step.applyToTree(&tree)
@@ -44,7 +44,7 @@ final class Day22Tests: XCTestCase {
     }
 
     func testFiftiesOnCubesLargerExample() {
-        let steps = Self.stepsParser.parse(largerExample)!
+        let steps = try! Self.stepsParser.parse(largerExample)
 
         let tree = steps.reduce(into: CuboidTree()) { tree, step in
             step.applyToTree(&tree)
@@ -55,7 +55,7 @@ final class Day22Tests: XCTestCase {
     }
 
     func testFiftiesOnCubesSmallExample() {
-        let steps = Self.stepsParser.parse(smallExample)!
+        let steps = try! Self.stepsParser.parse(smallExample)
 
         let tree = steps.reduce(into: CuboidTree()) { tree, step in
             step.applyToTree(&tree)
@@ -92,21 +92,34 @@ extension Day22Tests {
 extension Day22Tests {
     // MARK: - parser
 
-    static let numberParser = Int.parser(of: Substring.UTF8View.self)
-    static let rangeParser = numberParser.skip("..".utf8).take(numberParser).map { $0 ... $1 }
-    static let cuboidParser = Skip("x=".utf8).take(rangeParser).skip(",y=".utf8).take(rangeParser).skip(",z=".utf8).take(rangeParser)
-        .map { Cuboid(x: $0, y: $1, z: $2) }
-    static let stepParser = OneOfMany("on ".utf8.take(cuboidParser).map { Step.on($0) },
-                                      "off ".utf8.take(cuboidParser).map { Step.off($0) })
-    static let stepsParser = Many(stepParser, atLeast: 1, separator: "\n".utf8)
+    static let numberParser = Int.parser(of: Substring.self)
+    static let rangeParser = Parse { $0 ... $1 } with: { numberParser; ".."; numberParser }
+    static let cuboidParser = Parse { Cuboid(x: $0, y: $1, z: $2) } with: {
+        "x="
+        rangeParser
+        ",y="
+        rangeParser
+        ",z="
+        rangeParser
+    }
+
+    static let stepParser = OneOf {
+        Parse { Step.on($0) } with: { "on "; cuboidParser }
+        Parse { Step.off($0) } with: { "off "; cuboidParser }
+    }
+
+    static let stepsParser = Parse {
+        Many(atLeast: 1) { stepParser } separator: { "\n" }
+        Skip { Optionally { "\n" } }
+    }
 
     func testParseExample() {
-        let steps = Self.stepsParser.parse(smallExample)!
+        let steps = try! Self.stepsParser.parse(smallExample)
         XCTAssertEqual(steps.count, 4)
     }
 
     func testParseInput() {
-        let steps = Self.stepsParser.parse(input)!
+        let steps = try! Self.stepsParser.parse(input)
         XCTAssertEqual(steps.count, 420)
     }
 

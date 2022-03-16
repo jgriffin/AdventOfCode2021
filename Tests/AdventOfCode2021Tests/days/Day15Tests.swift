@@ -25,15 +25,15 @@ final class Day15Tests: XCTestCase {
         """
     }
 
-    func testTotalRisk5xExample() {
-        let riskMap = Self.riskMapParser.parse(example)!
+    func testTotalRisk5xExample() throws {
+        let riskMap = try Self.riskMapParser.parse(example)
 
         let totalRisk = bestPath5xTotalRisk(riskMap)
         XCTAssertEqual(totalRisk, 315)
     }
 
     func testTotalRisk5xInput() {
-        let riskMap = Self.riskMapParser.parse(input)!
+        let riskMap = try! Self.riskMapParser.parse(input)
 
         let totalRisk = bestPath5xTotalRisk(riskMap)
         XCTAssertEqual(totalRisk, 2853)
@@ -42,14 +42,14 @@ final class Day15Tests: XCTestCase {
     // MARK: - total risk
 
     func testTotalRiskExample() {
-        let riskMap = Self.riskMapParser.parse(example)!
+        let riskMap = try! Self.riskMapParser.parse(example)
 
         let totalRisk = bestPathTotalRisk(riskMap)
         XCTAssertEqual(totalRisk, 40)
     }
 
     func testTotalRiskInput() {
-        let riskMap = Self.riskMapParser.parse(input)!
+        let riskMap = try! Self.riskMapParser.parse(input)
 
         let totalRisk = bestPathTotalRisk(riskMap)
         XCTAssertEqual(totalRisk, 503)
@@ -57,17 +57,22 @@ final class Day15Tests: XCTestCase {
 
     // MARK: - parser
 
-    static let risksParser = Prefix(1..., while: { $0.isNumber }).utf8.map { $0.map { $0.wholeNumberValue! }}
-    static let riskMapParser = Many(risksParser, separator: "\n".utf8).map { RiskMap($0) }
+    static let risksParser = Prefix(1..., while: { $0.isNumber }).map { $0.map { $0.wholeNumberValue! }}
+    static let riskMapParser = Parse {
+        RiskMap($0)
+    } with: {
+        Many { risksParser } separator: { "\n" }
+        Skip { Optionally { "\n" } }
+    }
 
-    func testParseExample() {
-        let riskMap = Self.riskMapParser.parse(example)!
+    func testParseExample() throws {
+        let riskMap = try Self.riskMapParser.parse(example)
         XCTAssertEqual(riskMap.count, 10)
         XCTAssertEqual(riskMap.last?.last, 1)
     }
 
-    func testParseInput() {
-        let riskMap = Self.riskMapParser.parse(input)!
+    func testParseInput() throws {
+        let riskMap = try Self.riskMapParser.parse(input)
         XCTAssertEqual(riskMap.count, 100)
         XCTAssertEqual(riskMap.last?.last, 1)
     }

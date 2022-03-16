@@ -8,7 +8,7 @@ import XCTest
 
 final class Day23Tests: XCTestCase {
     func testSolve4Example() {
-        let start = Self.input4Parser.parse(example4)!
+        let start = try! Self.input4Parser.parse(example4)
 
         let solver = AStar(
             neighborsOf: { (state: State) in
@@ -24,7 +24,7 @@ final class Day23Tests: XCTestCase {
     }
 
     func testSolve4Input() {
-        let start = Self.input4Parser.parse(input4)!
+        let start = try! Self.input4Parser.parse(input4)
 
         let solver = AStar(
             neighborsOf: { (state: State) in
@@ -40,7 +40,7 @@ final class Day23Tests: XCTestCase {
     }
 
     func testSolveExample() {
-        let start = Self.input2Parser.parse(example)!
+        let start = try! Self.input2Parser.parse(example)
 
         let solver = AStar(
             neighborsOf: { (state: State) in
@@ -56,7 +56,7 @@ final class Day23Tests: XCTestCase {
     }
 
     func testSolveInput() {
-        let start = Self.input2Parser.parse(Self.input)!
+        let start = try! Self.input2Parser.parse(Self.input)
 
         let solver = AStar(
             neighborsOf: { (state: State) in
@@ -72,7 +72,7 @@ final class Day23Tests: XCTestCase {
     }
 
     func testStateMoves() {
-        let state = Self.input2Parser.parse(example)!
+        let state = try! Self.input2Parser.parse(example)
         let moves = state.moves2()
         let newStates = moves.map { m in state.applyingMove(m) }
         // print(newStates.map(\.description).joined(separator: "\n"))
@@ -496,45 +496,53 @@ extension Day23Tests {
 
     // MARK: - parser
 
-    static let aPodParser = OneOfMany("A".utf8.map { APod.a },
-                                      "B".utf8.map { APod.b },
-                                      "C".utf8.map { APod.c },
-                                      "D".utf8.map { APod.d })
-    static let fourPodsParser = Many(aPodParser, atLeast: 4, atMost: 4, separator: "#".utf8)
+    static let aPodParser = OneOf {
+        "A".map { APod.a }
+        "B".map { APod.b }
+        "C".map { APod.c }
+        "D".map { APod.d }
+    }
 
-    static let headerParser = "#############\n#...........#\n".utf8
-    static let s2Parser = Skip("###".utf8).take(fourPodsParser).skip("###".utf8)
-    static let s1Parser = Skip("  #".utf8).take(fourPodsParser).skip("#".utf8)
+    static let fourPodsParser = Many(atLeast: 4, atMost: 4) { aPodParser } separator: { "#" }
 
-    static let input2Parser = Skip(headerParser)
-        .take(s2Parser).skip("\n".utf8)
-        .take(s1Parser).skip("\n".utf8)
-        .map { s2, s1 in State(occupants: State.occupantsFrom(s2: s2, s1: s1, s0: [], s00: [])) }
+    static let headerParser = Parse { "#############\n#...........#\n" }
+    static let s2Parser = Parse { "###"; fourPodsParser; "###" }
+    static let s1Parser = Parse { "  #"; fourPodsParser; "#" }
 
-    static let input4Parser = Skip(headerParser)
-        .take(s2Parser).skip("\n".utf8)
-        .take(s1Parser).skip("\n".utf8)
-        .take(s1Parser).skip("\n".utf8)
-        .take(s1Parser).skip("\n".utf8)
-        .map { s2, s1, s0, s00 in State(occupants: State.occupantsFrom(s2: s2, s1: s1, s0: s0, s00: s00)) }
+    static let input2Parser = Parse { s2, s1 in State(occupants: State.occupantsFrom(s2: s2, s1: s1, s0: [], s00: [])) } with: {
+        Skip { headerParser }
+        Parse { s2Parser; "\n" }
+        Parse { s1Parser; "\n" }
+        "  #########"
+        Skip { Optionally { "\n" } }
+    }
+
+    static let input4Parser = Parse { s2, s1, s0, s00 in State(occupants: State.occupantsFrom(s2: s2, s1: s1, s0: s0, s00: s00)) } with: {
+        Skip { headerParser }
+        Parse { s2Parser; "\n" }
+        Parse { s1Parser; "\n" }
+        Parse { s1Parser; "\n" }
+        Parse { s1Parser; "\n" }
+        "  #########"
+    }
 
     func testParseExample() {
-        let result = Self.input2Parser.parse(example)!
+        let result = try! Self.input2Parser.parse(example)
         XCTAssertEqual("\(result)", "....... bcbd adca .... ....")
     }
 
     func testParseInput() {
-        let result = Self.input2Parser.parse(Self.input)!
+        let result = try! Self.input2Parser.parse(Self.input)
         XCTAssertEqual("\(result)", "....... cdab badc .... ....")
     }
 
     func testParseExample4() {
-        let result = Self.input4Parser.parse(example4)!
+        let result = try! Self.input4Parser.parse(example4)
         XCTAssertEqual("\(result)", "....... bcbd dcba dbac adca")
     }
 
     func testParseInput4() {
-        let result = Self.input4Parser.parse(input4)!
+        let result = try! Self.input4Parser.parse(input4)
         XCTAssertEqual("\(result)", "....... cdab dcba dbac badc")
     }
 }
