@@ -11,5 +11,9 @@ public extension Collection where Element: Hashable {
 
 public extension Sequence {
     var asArray: [Self.Element] { Array(self) }
-    var asString: String { map { "\($0)" }.joined(separator: ", ") }
+    var asString: String { map(toString).joined(separator: ", ") }
+
+    var toLines: String { map(toString).joined(separator: "\n") }
 }
+
+public func toString<T>(_ t: T) -> String { "\(t)" }

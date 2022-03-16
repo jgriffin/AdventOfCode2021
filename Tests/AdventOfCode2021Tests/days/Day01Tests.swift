@@ -18,7 +18,7 @@ final class Day01Tests: XCTestCase {
 
     let input = resourceURL(filename: "Day01Input.txt")!.readContents()!
 
-    static let depthParser = Int.parser()
+    static let depthParser = Int.parser(of: Substring.self)
     static let depthsParser = Many(depthParser, separator: "\n")
 
     func testParseExample() throws {

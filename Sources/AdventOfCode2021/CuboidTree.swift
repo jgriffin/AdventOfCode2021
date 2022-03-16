@@ -2,9 +2,7 @@
 // Created by John Griffin on 12/23/21
 //
 
-struct Index3D: Hashable {
-    let x, y, z: Int
-}
+typealias Index3D = Index3
 
 public struct Cuboid: Equatable {
     public let x, y, z: Range<Int>
